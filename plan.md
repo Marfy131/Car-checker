@@ -1,5 +1,15 @@
 # Car Watcher – Implementation Plan
 
+## 0. GitHub Copilot CLI / AI Agent Instructions
+
+When executing this plan via GitHub Copilot CLI or other AI agents, adhere to the following strict guidelines:
+1. **No JPA/Hibernate:** Strictly use **Spring Data JDBC** and **JdbcTemplate** for data access. 
+2. **Database:** Use **SQLite** exclusively. Configure `WAL` mode. Do not use H2 or PostgreSQL.
+3. **Architecture:** Maintain the single-application modular monolith structure defined in Section 3. Do not create separate deployable microservices.
+4. **Step-by-step Execution:** Follow the atomic tasks defined in **Section 24 (Prompt-Ready Tasks)** sequentially. Complete one prompt fully, verify it, and wait for the user to proceed to the next.
+5. **Testing First/Along:** Always generate JUnit 5 and Mockito tests alongside the implementation to maintain the 90% coverage requirement.
+6. **Language:** Keep all code, variables, logs, and comments in English. Only use Slovak for Thymeleaf UI text and Email templates as specified.
+
 ## 1. Goal
 
 Build a low-memory Spring Boot 4.x application on Raspberry Pi 3 using Java 25 for tracking vehicle-related obligations and notifying users by email.
@@ -970,16 +980,37 @@ A release is done when:
 - tests pass with aggregated coverage >= 90%
 - app runs stably on Raspberry Pi 3 within memory budget
 
-## 24. Recommended First Concrete Tasks
+## 24. Prompt-Ready Tasks for GitHub Copilot CLI
 
-1. Create parent Maven project with modules
-2. Add Boot app and external config support
-3. Add SQLite + Flyway
-4. Create initial migration with `car`, `insurance_policy`, `check_schedule`, `check_run_log`
-5. Implement car creation flow with auto-created PZP and collision policy
-6. Implement list and edit pages
-7. Implement DB-backed scheduler core
-8. Implement manual evaluation and daily summary generation
-9. Add first external provider adapter
-10. Add full tests and JaCoCo aggregation
+*(Feed these tasks sequentially to the Copilot CLI)*
+
+**Task 1: Project Skeleton & Maven Setup**
+> "Generate a parent Maven `pom.xml` for `carwatch-parent` using Java 25 and Spring Boot 4.x. Include plugin management for JaCoCo. Create sub-modules: `carwatch-boot`, `carwatch-domain`, `carwatch-application`, `carwatch-infrastructure`, and `carwatch-web`. Create basic empty `pom.xml` files for each sub-module linking to the parent."
+
+**Task 2: Database & Core Dependencies**
+> "In `carwatch-infrastructure`, add dependencies for Spring Data JDBC, SQLite JDBC driver, and Flyway. In `carwatch-boot`, create the main `CarWatcherApplication` class. Add `application.yml` configuring the SQLite connection (`jdbc:sqlite:data/carwatch.db`) and Flyway."
+
+**Task 3: Initial Database Migration**
+> "Create a Flyway migration script `V1__init.sql` in `carwatch-infrastructure` to create tables for: `car`, `insurance_policy`, `check_schedule`, and `check_run_log`. Use SQLite syntax, ensure foreign keys are supported, and include unique constraints like `car(license_plate)`."
+
+**Task 4: Domain Entities**
+> "In `carwatch-domain`, create the core Java records/classes for `Car` and `InsurancePolicy`. Include the enums `PolicyType`, `CheckMode`, and `CheckStatus` as defined in the domain model."
+
+**Task 5: Repositories (Spring Data JDBC)**
+> "In `carwatch-infrastructure`, create Spring Data JDBC repository interfaces for `Car` and `InsurancePolicy`. Add custom `@Query` methods if necessary for finding cars by license plate or active status."
+
+**Task 6: Car Creation Use Case**
+> "In `carwatch-application`, implement a `CarManagementService`. Write a method to create a new `Car` which automatically creates two linked `InsurancePolicy` records (PZP and COLLISION) with default 'MANUAL' check modes. Write a JUnit 5 test for this logic."
+
+**Task 7: Web Layer & Thymeleaf Layout**
+> "In `carwatch-web`, add Thymeleaf dependencies. Create a base layout HTML file using Bootstrap or minimal CSS. Create a `CarController` with a `/cars` endpoint that lists all cars from the DB, rendering them in a `cars-list.html` view."
+
+**Task 8: Scheduler Core**
+> "In `carwatch-application`, implement a custom lightweight scheduler (`ScheduleDispatcher`) using Spring's `@Scheduled` to poll `check_schedule` every 30 seconds. Do not use Quartz. Ensure it claims rows atomically using a lock field."
+
+**Task 9: Check Provider Interfaces**
+> "In `carwatch-domain`, define the `VehicleCheckProvider` and `PolicyCheckProvider` interfaces. Then, in `carwatch-infrastructure`, implement a stub for `PzpManualCheckProvider`."
+
+**Task 10: Email Notification Setup**
+> "In `carwatch-infrastructure`, implement an `EmailSender` interface using Spring Mail. Create a service in `carwatch-application` that generates the 'Daily Summary Email' in Slovak using Thymeleaf template processing for the email body."
 
