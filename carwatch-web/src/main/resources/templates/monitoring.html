@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
+    <h1 class="h3 mb-3" th:text="#{monitoring.title}">Monitoring</h1>
+    <p class="text-muted" th:text="#{monitoring.description}">
+        Use the links below for runtime monitoring and health checks.
+    </p>
+
+    <ul class="list-group">
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span th:text="#{monitoring.link.javamelody}">JavaMelody dashboard</span>
+            <a class="btn btn-sm btn-outline-primary" th:href="@{/monitoring/}">/monitoring/</a>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span th:text="#{monitoring.link.actuatorHealth}">Actuator health</span>
+            <a class="btn btn-sm btn-outline-primary" th:href="@{/actuator/health}">/actuator/health</a>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span th:text="#{monitoring.link.actuatorInfo}">Actuator info</span>
+            <a class="btn btn-sm btn-outline-primary" th:href="@{/actuator/info}">/actuator/info</a>
+        </li>
+    </ul>
+</div>
+</body>
+</html>

@@ -1,11 +1,12 @@
 package com.carwatch.infrastructure.config;
 
+import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.relational.core.dialect.AbstractDialect;
 import org.springframework.data.relational.core.dialect.LimitClause;
 import org.springframework.data.relational.core.dialect.LockClause;
 import org.springframework.data.relational.core.sql.LockOptions;
 
-public class SqliteDialect extends AbstractDialect {
+public class SqliteDialect extends AbstractDialect implements JdbcDialect {
 
     public static final SqliteDialect INSTANCE = new SqliteDialect();
 

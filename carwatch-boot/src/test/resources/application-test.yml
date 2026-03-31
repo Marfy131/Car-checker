@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: "jdbc:sqlite::memory:"
+    url: "jdbc:sqlite:file:carwatch-test?mode=memory&cache=shared"
     driver-class-name: org.sqlite.JDBC
     hikari:
       maximum-pool-size: 1

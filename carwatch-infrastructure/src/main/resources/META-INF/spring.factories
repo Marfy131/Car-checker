@@ -1,1 +1,0 @@
-org.springframework.data.jdbc.repository.config.DialectResolver$JdbcDialectProvider=com.carwatch.infrastructure.config.SqliteDialectProvider
