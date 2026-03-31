@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
+    <h1 class="h3 mb-3" th:text="#{schedule.list.title}">Schedules</h1>
+    <div class="table-responsive">
+        <table class="table table-striped" th:if="${!#lists.isEmpty(schedules)}">
+            <thead>
+            <tr>
+                <th th:text="#{schedule.list.type}">Type</th>
+                <th th:text="#{schedule.list.cron}">Cron</th>
+                <th th:text="#{schedule.list.warning}">Warning</th>
+                <th th:text="#{schedule.list.enabled}">Enabled</th>
+                <th th:text="#{schedule.list.actions}">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="schedule : ${schedules}">
+                <td th:text="${schedule.checkType}">PZP_CHECK</td>
+                <td th:text="${schedule.cronExpression}">0 0 6 * * *</td>
+                <td th:text="${schedule.warningDaysBefore}">14</td>
+                <td th:text="${schedule.enabled}">true</td>
+                <td class="d-flex gap-2">
+                    <a class="btn btn-sm btn-outline-secondary"
+                       th:href="@{/schedules/{id}/edit(id=${schedule.id})}"
+                       th:text="#{schedule.list.edit}">Edit</a>
+                    <form method="post" th:action="@{/schedules/{id}/run-now(id=${schedule.id})}">
+                        <button class="btn btn-sm btn-outline-primary" type="submit" th:text="#{schedule.list.runNow}">
+                            Run now
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="alert alert-info" th:if="${#lists.isEmpty(schedules)}" th:text="#{schedule.list.empty}">
+        No schedules
+    </div>
+</div>
+</body>
+</html>

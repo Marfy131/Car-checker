@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
+    <h1 class="h3 mb-3" th:text="#{settings.title}">Settings</h1>
+    <form class="row g-3" method="post" th:object="${settingsForm}" th:action="@{/settings}">
+        <div class="col-md-4">
+            <label class="form-label" for="defaultLocale" th:text="#{settings.defaultLocale}">Default locale</label>
+            <select class="form-select" id="defaultLocale" th:field="*{defaultLocale}">
+                <option value="sk">sk</option>
+                <option value="en">en</option>
+            </select>
+        </div>
+        <div class="col-md-8">
+            <label class="form-label" for="emailRecipients" th:text="#{settings.emailRecipients}">
+                Email recipients
+            </label>
+            <input class="form-control" id="emailRecipients" th:field="*{emailRecipients}" type="text"/>
+            <div class="form-text" th:text="#{settings.emailRecipients.help}">Comma separated</div>
+        </div>
+        <div class="col-12 d-flex gap-2">
+            <button class="btn btn-primary" type="submit" th:text="#{settings.save}">Save</button>
+        </div>
+    </form>
+
+    <hr/>
+    <h2 class="h5" th:text="#{settings.all}">All settings</h2>
+    <ul class="list-group" th:if="${!#lists.isEmpty(allSettings)}">
+        <li class="list-group-item d-flex justify-content-between" th:each="item : ${allSettings}">
+            <span th:text="${item.settingKey}">app.default-locale</span>
+            <span th:text="${item.settingValue}">sk</span>
+        </li>
+    </ul>
+</div>
+</body>
+</html>

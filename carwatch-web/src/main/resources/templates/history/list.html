@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
+    <h1 class="h3 mb-3" th:text="#{history.title}">Run history</h1>
+    <div class="table-responsive">
+        <table class="table table-striped" th:if="${!#lists.isEmpty(runs)}">
+            <thead>
+            <tr>
+                <th th:text="#{history.type}">Type</th>
+                <th th:text="#{history.startedAt}">Started</th>
+                <th th:text="#{history.status}">Status</th>
+                <th th:text="#{history.message}">Message</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="run : ${runs}">
+                <td th:text="${run.checkType}">PZP_CHECK</td>
+                <td th:text="${run.startedAt}">2026-01-01T06:00</td>
+                <td th:text="${run.status}">SUCCESS</td>
+                <td th:text="${run.message}">done</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="alert alert-info" th:if="${#lists.isEmpty(runs)}" th:text="#{history.empty}">
+        No runs yet
+    </div>
+</div>
+</body>
+</html>

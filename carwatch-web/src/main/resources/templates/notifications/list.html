@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
+    <h1 class="h3 mb-3" th:text="#{notification.title}">Notifications</h1>
+    <div class="table-responsive">
+        <table class="table table-striped" th:if="${!#lists.isEmpty(notifications)}">
+            <thead>
+            <tr>
+                <th th:text="#{notification.type}">Type</th>
+                <th th:text="#{notification.recipient}">Recipient</th>
+                <th th:text="#{notification.sentAt}">Sent at</th>
+                <th th:text="#{notification.status}">Status</th>
+                <th th:text="#{notification.subject}">Subject</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${notifications}">
+                <td th:text="${item.notificationType}">DAILY_SUMMARY</td>
+                <td th:text="${item.recipient}">john@example.com</td>
+                <td th:text="${item.sentAt}">2026-01-01T06:10</td>
+                <td th:text="${item.status}">SENT</td>
+                <td th:text="${item.subject}">Subject</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="alert alert-info" th:if="${#lists.isEmpty(notifications)}" th:text="#{notification.empty}">
+        No notifications
+    </div>
+</div>
+</body>
+</html>

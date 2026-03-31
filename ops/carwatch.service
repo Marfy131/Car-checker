@@ -1,0 +1,19 @@
+[Unit]
+Description=Car Watcher Spring Boot service
+After=network.target
+
+[Service]
+Type=simple
+User=carwatch
+Group=carwatch
+WorkingDirectory=/opt/carwatch
+Environment=SPRING_PROFILES_ACTIVE=prod
+Environment=CARWATCH_HOME=/opt/carwatch
+EnvironmentFile=-/etc/carwatch/carwatch.env
+ExecStart=/opt/carwatch/bin/run-prod.sh
+Restart=on-failure
+RestartSec=10
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target

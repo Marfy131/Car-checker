@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
+    <h1 class="h3 mb-3" th:text="#{schedule.form.title}">Edit Schedule</h1>
+    <form class="row g-3" method="post" th:object="${scheduleForm}" th:action="@{/schedules/{id}(id=${scheduleForm.id})}">
+        <input type="hidden" th:field="*{id}"/>
+        <div class="col-md-8">
+            <label class="form-label" for="cronExpression" th:text="#{schedule.form.cron}">Cron</label>
+            <input class="form-control" id="cronExpression" th:field="*{cronExpression}" type="text"/>
+            <div class="text-danger small" th:errors="*{cronExpression}">Cron error</div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="warningDaysBefore" th:text="#{schedule.form.warning}">Warning days</label>
+            <input class="form-control" id="warningDaysBefore" min="0" th:field="*{warningDaysBefore}" type="number"/>
+            <div class="text-danger small" th:errors="*{warningDaysBefore}">Warning days error</div>
+        </div>
+        <div class="col-12 form-check">
+            <input class="form-check-input" id="enabled" th:field="*{enabled}" type="checkbox"/>
+            <label class="form-check-label" for="enabled" th:text="#{schedule.form.enabled}">Enabled</label>
+        </div>
+        <div class="col-12 d-flex gap-2">
+            <button class="btn btn-primary" type="submit" th:text="#{schedule.form.save}">Save</button>
+            <a class="btn btn-outline-secondary" th:href="@{/schedules}" th:text="#{schedule.form.cancel}">Cancel</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

@@ -1,0 +1,32 @@
+spring:
+  datasource:
+    url: ${CARWATCH_DB_URL:jdbc:sqlite:${CARWATCH_HOME:/opt/carwatch}/data/carwatch.db}
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      maximum-pool-size: ${CARWATCH_DB_MAX_POOL:2}
+      minimum-idle: ${CARWATCH_DB_MIN_IDLE:0}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:25}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+
+carwatch:
+  scheduler:
+    enabled: ${CARWATCH_SCHEDULER_ENABLED:true}
+  email:
+    enabled: ${CARWATCH_EMAIL_ENABLED:true}
+    from: ${CARWATCH_EMAIL_FROM:carwatch@localhost}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+server:
+  port: ${SERVER_PORT:8080}
