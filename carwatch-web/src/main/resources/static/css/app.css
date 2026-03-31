@@ -1,0 +1,4 @@
+body { padding-top: 10px; }
+.table th { white-space: nowrap; }
+.status-active { color: #198754; font-weight: bold; }
+.status-inactive { color: #dc3545; }

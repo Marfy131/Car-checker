@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
+    <h1 class="h3 mb-3"
+        th:text="${formMode == 'edit'} ? #{car.form.title.edit} : #{car.form.title.add}">
+        Car Form
+    </h1>
+
+    <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
+        <div th:each="error : ${#fields.globalErrors()}" th:text="${error}">Global error</div>
+    </div>
+
+    <form th:object="${carForm}"
+          th:action="${formMode == 'edit'} ? @{/cars/{id}(id=${carForm.id})} : @{/cars}"
+          method="post"
+          class="row g-3">
+
+        <input type="hidden" th:field="*{id}"/>
+        <input type="hidden" th:field="*{version}"/>
+
+        <div class="col-md-6">
+            <label for="name" class="form-label" th:text="#{car.form.name}">Car Name</label>
+            <input id="name" type="text" class="form-control" th:field="*{name}"/>
+            <div class="text-danger small" th:errors="*{name}">Name error</div>
+        </div>
+
+        <div class="col-md-6">
+            <label for="licensePlate" class="form-label" th:text="#{car.form.licensePlate}">License Plate</label>
+            <input id="licensePlate" type="text" class="form-control" th:field="*{licensePlate}"/>
+            <div class="text-danger small" th:errors="*{licensePlate}">License plate error</div>
+        </div>
+
+        <div class="col-md-6">
+            <label for="registrationDate" class="form-label" th:text="#{car.form.registrationDate}">
+                Registration Date
+            </label>
+            <input id="registrationDate" type="date" class="form-control" th:field="*{registrationDate}"/>
+            <div class="text-danger small" th:errors="*{registrationDate}">Registration date error</div>
+        </div>
+
+        <div class="col-md-6">
+            <label for="vin" class="form-label" th:text="#{car.form.vin}">VIN</label>
+            <input id="vin" type="text" class="form-control" th:field="*{vin}"/>
+            <div class="text-danger small" th:errors="*{vin}">VIN error</div>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label d-block" th:text="#{car.form.vignettes}">Vignettes</label>
+            <div class="form-check form-check-inline">
+                <input id="vignetteSk" class="form-check-input" type="checkbox" th:field="*{vignetteSk}"/>
+                <label class="form-check-label" for="vignetteSk" th:text="#{car.form.vignette.sk}">
+                    Slovakia (SK)
+                </label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input id="vignetteCz" class="form-check-input" type="checkbox" th:field="*{vignetteCz}"/>
+                <label class="form-check-label" for="vignetteCz" th:text="#{car.form.vignette.cz}">
+                    Czechia (CZ)
+                </label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input id="vignetteAt" class="form-check-input" type="checkbox" th:field="*{vignetteAt}"/>
+                <label class="form-check-label" for="vignetteAt" th:text="#{car.form.vignette.at}">
+                    Austria (AT)
+                </label>
+            </div>
+        </div>
+
+        <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary" th:text="#{car.form.save}">Save</button>
+            <a class="btn btn-outline-secondary" th:href="@{/cars}" th:text="#{car.form.cancel}">Cancel</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

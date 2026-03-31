@@ -1,0 +1,62 @@
+spring:
+  application:
+    name: carwatch
+  datasource:
+    url: jdbc:sqlite:data/carwatch.db
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      maximum-pool-size: 4
+      minimum-idle: 1
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  sql:
+    init:
+      mode: always
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.carwatch: DEBUG
+  file:
+    name: logs/app.log
+  logback:
+    rollingpolicy:
+      max-history: 30
+      max-file-size: 10MB
+
+carwatch:
+  scheduler:
+    enabled: true
+  email:
+    enabled: ${CARWATCH_EMAIL_ENABLED:false}
+    from: ${CARWATCH_EMAIL_FROM:carwatcher@localhost}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
+
+javamelody:
+  enabled: true
+  spring-monitoring-enabled: true
+  init-parameters:
+    log: true

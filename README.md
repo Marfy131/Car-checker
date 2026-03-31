@@ -18,6 +18,13 @@ This repository currently contains the initial planning artifacts:
 - `plan.md` – implementation plan
 - `V1__init.sql` – first Flyway migration draft for SQLite
 
+## Runtime profiles and operations artifacts
+
+- `application-prod.yml` provides production-oriented defaults with environment-variable overrides.
+- `ops/carwatch.service` is a systemd unit file for Raspberry Pi/Linux deployments.
+- `ops/run-prod.sh` starts the packaged application with production profile defaults.
+- `ops/backup-db.sh` creates timestamped SQLite backups.
+
 ## Goals
 
 - run comfortably on **Raspberry Pi 3**

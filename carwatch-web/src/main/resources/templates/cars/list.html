@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0" th:text="#{car.list.title}">Car List</h1>
+        <a class="btn btn-primary" th:href="@{/cars/new}" th:text="#{car.list.add}">Add Car</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle" th:if="${!#lists.isEmpty(cars)}">
+            <thead>
+            <tr>
+                <th th:text="#{car.list.name}">Name</th>
+                <th th:text="#{car.list.licensePlate}">License Plate</th>
+                <th th:text="#{car.list.registrationDate}">Registration Date</th>
+                <th th:text="#{car.list.vin}">VIN</th>
+                <th th:text="#{car.list.active}">Active</th>
+                <th th:text="#{car.list.actions}">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="car : ${cars}">
+                <td th:text="${car.name}">Name</td>
+                <td th:text="${car.licensePlate}">BA123AA</td>
+                <td th:text="${#temporals.format(car.registrationDate, 'yyyy-MM-dd')}">2026-01-01</td>
+                <td th:text="${car.vin}">VIN</td>
+                <td>
+                    <span th:if="${car.active}" class="status-active" th:text="#{status.yes}">Yes</span>
+                    <span th:unless="${car.active}" class="status-inactive" th:text="#{status.no}">No</span>
+                </td>
+                <td class="d-flex gap-2">
+                    <a class="btn btn-sm btn-outline-secondary"
+                       th:href="@{/cars/{id}/edit(id=${car.id})}"
+                       th:text="#{car.list.edit}">Edit</a>
+                    <form th:action="@{/cars/{id}/deactivate(id=${car.id})}" method="post" th:if="${car.active}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" th:text="#{car.list.deactivate}">
+                            Deactivate
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="alert alert-info" th:if="${#lists.isEmpty(cars)}" th:text="#{car.list.empty}">
+        No cars found
+    </div>
+</div>
+</body>
+</html>

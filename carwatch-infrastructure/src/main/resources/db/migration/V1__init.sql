@@ -145,6 +145,15 @@ CREATE TABLE notification_log (
     id                   INTEGER PRIMARY KEY AUTOINCREMENT,
     car_id               INTEGER,
     insurance_policy_id  INTEGER,
+    obligation_type      TEXT CHECK (obligation_type IN (
+                                'PZP',
+                                'COLLISION',
+                                'STK',
+                                'EK',
+                                'VIGNETTE_SK',
+                                'VIGNETTE_CZ',
+                                'VIGNETTE_AT'
+                            )),
     notification_type    TEXT    NOT NULL
                                 CHECK (notification_type IN (
                                     'EXPIRY_WARNING',
@@ -159,6 +168,7 @@ CREATE TABLE notification_log (
     status               TEXT    NOT NULL CHECK (status IN ('PENDING', 'SENT', 'FAILED')),
     provider_message_id  TEXT,
     check_run_id         INTEGER,
+    dedupe_date          TEXT,
     CONSTRAINT fk_notification_log_car
         FOREIGN KEY (car_id) REFERENCES car(id) ON DELETE SET NULL,
     CONSTRAINT fk_notification_log_insurance_policy
@@ -220,6 +230,9 @@ CREATE INDEX idx_notification_log_sent_at
 
 CREATE INDEX idx_notification_log_status_sent_at
     ON notification_log(status, sent_at DESC);
+
+CREATE INDEX idx_notification_log_dedupe
+    ON notification_log(car_id, obligation_type, notification_type, dedupe_date);
 
 -- Seed baseline application settings.
 INSERT INTO app_setting (setting_key, setting_value)

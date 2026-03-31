@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
+    <h1 class="h3 mb-3" th:text="#{nav.dashboard}">Dashboard</h1>
+    <div class="alert alert-secondary" role="alert">
+        <span th:text="#{dashboard.placeholder}">Dashboard content placeholder.</span>
+    </div>
+</div>
+</body>
+</html>

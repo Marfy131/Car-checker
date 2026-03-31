@@ -1,0 +1,13 @@
+package com.carwatch.domain.schedule;
+
+public enum CheckType {
+    PZP_CHECK,
+    COLLISION_INSURANCE_CHECK,
+    STK_CHECK,
+    EK_CHECK,
+    VIGNETTE_SK_CHECK,
+    VIGNETTE_CZ_CHECK,
+    VIGNETTE_AT_CHECK,
+    DAILY_SUMMARY_EMAIL,
+    DAILY_REMINDER_SCAN
+}
