@@ -2,9 +2,7 @@ package com.carwatch.web.controller;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -23,38 +21,24 @@ import com.carwatch.domain.vignette.CountryCode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.format.datetime.standard.DateTimeFormatterRegistrar;
-import org.springframework.format.support.DefaultFormattingConversionService;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
+@WebMvcTest(controllers = CarController.class)
+@Import(CarController.class)
 class CarControllerWebMvcTest {
 
+    @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
     private CarManagementService carManagementService;
-
-    @BeforeEach
-    void setUp() {
-        this.carManagementService = mock(CarManagementService.class);
-
-        LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
-        validator.afterPropertiesSet();
-
-        DefaultFormattingConversionService conversionService = new DefaultFormattingConversionService();
-        DateTimeFormatterRegistrar registrar = new DateTimeFormatterRegistrar();
-        registrar.setUseIsoFormat(true);
-        registrar.registerFormatters(conversionService);
-
-        this.mockMvc = MockMvcBuilders.standaloneSetup(new CarController(carManagementService))
-                .setValidator(validator)
-                .setConversionService(conversionService)
-                .build();
-    }
 
     @Test
     void listPageRendersCars() throws Exception {

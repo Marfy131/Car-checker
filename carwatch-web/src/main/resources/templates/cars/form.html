@@ -7,10 +7,6 @@
         Car Form
     </h1>
 
-    <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
-        <div th:each="error : ${#fields.globalErrors()}" th:text="${error}">Global error</div>
-    </div>
-
     <form th:object="${carForm}"
           th:action="${formMode == 'edit'} ? @{/cars/{id}(id=${carForm.id})} : @{/cars}"
           method="post"
