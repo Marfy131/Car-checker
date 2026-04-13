@@ -43,7 +43,7 @@ public class ScheduleClaimService {
             CheckSchedule claimed = checkScheduleRepository.save(current);
             copyState(claimed, schedule);
             return true;
-        } catch (OptimisticLockingFailureException ex) {
+        } catch (OptimisticLockingFailureException _) {
             return false;
         }
     }
@@ -67,7 +67,7 @@ public class ScheduleClaimService {
         try {
             CheckSchedule released = checkScheduleRepository.save(current);
             copyState(released, schedule);
-        } catch (OptimisticLockingFailureException ex) {
+        } catch (OptimisticLockingFailureException _) {
             // another worker already modified the schedule; release can be ignored here
         }
     }
@@ -86,7 +86,7 @@ public class ScheduleClaimService {
     private String resolveHostName() {
         try {
             return InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException ex) {
+        } catch (UnknownHostException _) {
             return "unknown-host";
         }
     }

@@ -18,6 +18,7 @@ public class CarVignetteSelectionRepositoryAdapter implements CarVignetteSelecti
 
     private static final DateTimeFormatter SQLITE_DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final RowMapper<CarVignetteSelection> MAPPER = CarVignetteSelectionRepositoryAdapter::mapRow;
+    private static final String CAR_ID_PARAM = "carId";
 
     private final NamedParameterJdbcTemplate jdbc;
 
@@ -32,7 +33,7 @@ public class CarVignetteSelectionRepositoryAdapter implements CarVignetteSelecti
         LocalDateTime updatedAt = selection.getUpdatedAt() != null ? selection.getUpdatedAt() : now;
 
         MapSqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("carId", selection.getCarId())
+                .addValue(CAR_ID_PARAM, selection.getCarId())
                 .addValue("country", selection.getCountry().name())
                 .addValue("enabled", selection.isEnabled())
                 .addValue("createdAt", createdAt)
@@ -53,8 +54,8 @@ public class CarVignetteSelectionRepositoryAdapter implements CarVignetteSelecti
     @Override
     public List<CarVignetteSelection> findByCarId(Long carId) {
         return jdbc.query(
-                "SELECT car_id, country, enabled, created_at, updated_at FROM car_vignette_selection WHERE car_id = :carId",
-                new MapSqlParameterSource("carId", carId),
+                "SELECT car_id, country, enabled, created_at, updated_at FROM car_vignette_selection WHERE car_id = :" + CAR_ID_PARAM,
+                new MapSqlParameterSource(CAR_ID_PARAM, carId),
                 MAPPER
         );
     }
@@ -62,8 +63,8 @@ public class CarVignetteSelectionRepositoryAdapter implements CarVignetteSelecti
     @Override
     public void deleteByCarId(Long carId) {
         jdbc.update(
-                "DELETE FROM car_vignette_selection WHERE car_id = :carId",
-                new MapSqlParameterSource("carId", carId)
+                "DELETE FROM car_vignette_selection WHERE car_id = :" + CAR_ID_PARAM,
+                new MapSqlParameterSource(CAR_ID_PARAM, carId)
         );
     }
 

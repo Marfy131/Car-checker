@@ -11,7 +11,6 @@ import com.carwatch.domain.obligation.ExpiryStatus;
 import com.carwatch.domain.obligation.ObligationState;
 import com.carwatch.domain.obligation.ObligationStateRepository;
 import com.carwatch.domain.obligation.ObligationType;
-import com.carwatch.domain.schedule.CheckRunLog;
 import com.carwatch.domain.schedule.CheckRunLogRepository;
 import com.carwatch.domain.vignette.CarVignetteSelection;
 import com.carwatch.domain.vignette.CarVignetteSelectionRepository;
@@ -55,8 +54,7 @@ public class ReminderNotificationService {
             EmailSender emailSender,
             DailySummaryTemplateRenderer dailySummaryTemplateRenderer,
             CheckRunLogRepository checkRunLogRepository,
-            CarVignetteSelectionRepository carVignetteSelectionRepository
-    ) {
+            CarVignetteSelectionRepository carVignetteSelectionRepository) {
         this(
                 obligationStateRepository,
                 notificationLogRepository,
@@ -65,8 +63,7 @@ public class ReminderNotificationService {
                 dailySummaryTemplateRenderer,
                 checkRunLogRepository,
                 carVignetteSelectionRepository,
-                Clock.systemDefaultZone()
-        );
+                Clock.systemDefaultZone());
     }
 
     ReminderNotificationService(
@@ -77,8 +74,7 @@ public class ReminderNotificationService {
             DailySummaryTemplateRenderer dailySummaryTemplateRenderer,
             CheckRunLogRepository checkRunLogRepository,
             CarVignetteSelectionRepository carVignetteSelectionRepository,
-            Clock clock
-    ) {
+            Clock clock) {
         this.obligationStateRepository = obligationStateRepository;
         this.notificationLogRepository = notificationLogRepository;
         this.carRepository = carRepository;
@@ -89,8 +85,7 @@ public class ReminderNotificationService {
         this.clock = clock;
     }
 
-    @Transactional
-    public int sendImmediateReminderForState(ObligationState state, String recipient) {
+    int sendImmediateReminderForState(ObligationState state, String recipient) {
         if (state.getCarId() == null || state.getStatus() == null || state.getStatus() == ExpiryStatus.VALID) {
             return 0;
         }
@@ -102,8 +97,7 @@ public class ReminderNotificationService {
                 state.getCarId(),
                 state.getObligationType(),
                 type,
-                today
-        )) {
+                today)) {
             return 0;
         }
 
@@ -119,15 +113,11 @@ public class ReminderNotificationService {
 
         NotificationLog log = createLog(
                 state.getCarId(),
-                null,
                 state.getObligationType(),
                 type,
                 subject,
                 recipient,
-                today,
-                null
-        );
-
+                today);
         SendResult sendResult = emailSender.send(new EmailMessage(recipient, subject, body));
         updateLogFromSendResult(log, sendResult);
         notificationLogRepository.save(log);
@@ -141,7 +131,7 @@ public class ReminderNotificationService {
         states.sort(Comparator.comparing(ObligationState::getCarId, Comparator.nullsLast(Long::compareTo)));
         for (ObligationState state : states) {
             if (state.getStatus() == ExpiryStatus.EXPIRING || state.getStatus() == ExpiryStatus.EXPIRED) {
-                sent += sendImmediateReminderForState(state, recipient);
+                sent += this.sendImmediateReminderForState(state, recipient);
             }
         }
         return sent;
@@ -167,13 +157,10 @@ public class ReminderNotificationService {
             NotificationLog log = createLog(
                     null,
                     null,
-                    null,
                     NotificationType.DAILY_SUMMARY,
                     subject,
                     recipient,
-                    today,
-                    null
-            );
+                    today);
             SendResult sendResult = emailSender.send(new EmailMessage(recipient, subject, htmlBody));
             updateLogFromSendResult(log, sendResult);
             notificationLogRepository.save(log);
@@ -184,39 +171,58 @@ public class ReminderNotificationService {
         return sent;
     }
 
-    public String resolveRecipientsFromSettings(List<com.carwatch.domain.setting.AppSetting> settings) {
-        for (com.carwatch.domain.setting.AppSetting setting : settings) {
-            if (SETTINGS_RECIPIENTS.equals(setting.getSettingKey())) {
-                return setting.getSettingValue();
-            }
-        }
-        return "";
+    private DailySummaryModel buildSummaryModel(String generatedAt, Locale locale) {
+        Map<Long, Map<ObligationType, ObligationState>> statesByCar = aggregateCarStates(obligationStateRepository.findAll());
+        Map<Long, Set<String>> enabledVignettes = aggregateEnabledVignettes(carVignetteSelectionRepository.findAll());
+
+        List<DailySummaryModel.CarSummaryLine> carLines = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
+        
+        buildCarSummaryLinesAndWarnings(carRepository.findAll(), statesByCar, enabledVignettes, locale, carLines, warnings);
+
+        List<String> recentRuns = checkRunLogRepository.findRecentRuns(10).stream()
+                .map(run -> run.getCheckType() + " - " + run.getStatus() + " - "
+                        + Optional.ofNullable(run.getMessage()).orElse(""))
+                .toList();
+
+        return new DailySummaryModel(generatedAt, warnings, carLines, recentRuns);
     }
 
-    private DailySummaryModel buildSummaryModel(String generatedAt, Locale locale) {
-        List<Car> cars = carRepository.findAll();
-        List<ObligationState> states = obligationStateRepository.findAll();
+    private Map<Long, Map<ObligationType, ObligationState>> aggregateCarStates(List<ObligationState> states) {
         Map<Long, Map<ObligationType, ObligationState>> statesByCar = new HashMap<>();
         for (ObligationState state : states) {
             if (state.getCarId() == null) {
                 continue;
             }
-            statesByCar.computeIfAbsent(state.getCarId(), key -> new HashMap<>()).put(state.getObligationType(), state);
+            statesByCar.computeIfAbsent(state.getCarId(), key -> new java.util.EnumMap<>(ObligationType.class))
+                    .put(state.getObligationType(), state);
         }
+        return statesByCar;
+    }
 
+    private Map<Long, Set<String>> aggregateEnabledVignettes(List<CarVignetteSelection> selections) {
         Map<Long, Set<String>> enabledVignettes = new HashMap<>();
-        for (CarVignetteSelection selection : carVignetteSelectionRepository.findAll()) {
+        for (CarVignetteSelection selection : selections) {
             if (selection.isEnabled()) {
-                enabledVignettes.computeIfAbsent(selection.getCarId(), key -> new HashSet<>()).add(selection.getCountry().name());
+                enabledVignettes.computeIfAbsent(selection.getCarId(), key -> new HashSet<>())
+                        .add(selection.getCountry().name());
             }
         }
+        return enabledVignettes;
+    }
 
-        List<DailySummaryModel.CarSummaryLine> carLines = new ArrayList<>();
-        List<String> warnings = new ArrayList<>();
+    private void buildCarSummaryLinesAndWarnings(
+            List<Car> cars, 
+            Map<Long, Map<ObligationType, ObligationState>> statesByCar, 
+            Map<Long, Set<String>> enabledVignettes, 
+            Locale locale,
+            List<DailySummaryModel.CarSummaryLine> carLinesOut,
+            List<String> warningsOut) {
         for (Car car : cars) {
             Map<ObligationType, ObligationState> carStates = statesByCar.getOrDefault(car.getId(), Map.of());
             Set<String> vignetteCountries = enabledVignettes.getOrDefault(car.getId(), Set.of());
-            DailySummaryModel.CarSummaryLine line = new DailySummaryModel.CarSummaryLine(
+            
+            carLinesOut.add(new DailySummaryModel.CarSummaryLine(
                     car.getName(),
                     car.getLicensePlate(),
                     displayDate(carStates.get(ObligationType.PZP)),
@@ -235,24 +241,17 @@ public class ReminderNotificationService {
                     displayStatus(carStates.get(ObligationType.VIGNETTE_CZ)),
                     vignetteCountries.contains("AT"),
                     displayDate(carStates.get(ObligationType.VIGNETTE_AT)),
-                    displayStatus(carStates.get(ObligationType.VIGNETTE_AT))
-            );
-            carLines.add(line);
+                    displayStatus(carStates.get(ObligationType.VIGNETTE_AT))));
 
             for (Map.Entry<ObligationType, ObligationState> entry : carStates.entrySet()) {
-                if (entry.getValue().getStatus() == ExpiryStatus.EXPIRING || entry.getValue().getStatus() == ExpiryStatus.EXPIRED) {
-                    warnings.add(car.getLicensePlate() + ": "
+                if (entry.getValue().getStatus() == ExpiryStatus.EXPIRING
+                        || entry.getValue().getStatus() == ExpiryStatus.EXPIRED) {
+                    warningsOut.add(car.getLicensePlate() + ": "
                             + humanObligation(entry.getKey(), locale)
                             + " (" + entry.getValue().getStatus() + ")");
                 }
             }
         }
-
-        List<String> recentRuns = checkRunLogRepository.findRecentRuns(10).stream()
-                .map(run -> run.getCheckType() + " - " + run.getStatus() + " - " + Optional.ofNullable(run.getMessage()).orElse(""))
-                .toList();
-
-        return new DailySummaryModel(generatedAt, warnings, carLines, recentRuns);
     }
 
     private String displayDate(ObligationState state) {
@@ -281,24 +280,19 @@ public class ReminderNotificationService {
 
     private NotificationLog createLog(
             Long carId,
-            Long insurancePolicyId,
             ObligationType obligationType,
             NotificationType type,
             String subject,
             String recipient,
-            LocalDate dedupeDate,
-            Long checkRunId
-    ) {
+            LocalDate dedupeDate) {
         NotificationLog log = new NotificationLog();
         log.setCarId(carId);
-        log.setInsurancePolicyId(insurancePolicyId);
         log.setObligationType(obligationType);
         log.setNotificationType(type);
         log.setChannel(NotificationChannel.EMAIL);
         log.setSubject(subject);
         log.setRecipient(recipient);
         log.setStatus(NotificationStatus.PENDING);
-        log.setCheckRunId(checkRunId);
         log.setDedupeDate(dedupeDate == null ? null : dedupeDate.toString());
         return log;
     }
@@ -321,7 +315,7 @@ public class ReminderNotificationService {
         }
         boolean sk = locale.getLanguage().equals("sk");
         return switch (type) {
-            case PZP -> sk ? "PZP" : "PZP";
+            case PZP -> "PZP";
             case COLLISION -> sk ? "Havarijne poistenie" : "Collision insurance";
             case STK -> "STK";
             case EK -> "EK";

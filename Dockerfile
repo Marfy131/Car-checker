@@ -1,6 +1,6 @@
 # Multi-stage build for Car-checker Spring Boot application
 # Stage 1: Build
-FROM maven:3.9.8-eclipse-temurin-25-alpine AS builder
+FROM maven:3.9.14-eclipse-temurin-25-alpine AS builder
 
 WORKDIR /build
 

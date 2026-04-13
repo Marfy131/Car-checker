@@ -25,6 +25,10 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/cars")
 public class CarController {
 
+    private static final String ATTR_FORM_MODE = "formMode";
+    private static final String VIEW_FORM = "cars/form";
+    private static final String REDIRECT_CARS = "redirect:/cars";
+
     private final CarManagementService carService;
 
     public CarController(CarManagementService carService) {
@@ -40,8 +44,8 @@ public class CarController {
     @GetMapping("/new")
     public String showCreateForm(Model model) {
         model.addAttribute("carForm", new CarForm());
-        model.addAttribute("formMode", "add");
-        return "cars/form";
+        model.addAttribute(ATTR_FORM_MODE, "add");
+        return VIEW_FORM;
     }
 
     @PostMapping
@@ -51,8 +55,8 @@ public class CarController {
             Model model
     ) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("formMode", "add");
-            return "cars/form";
+            model.addAttribute(ATTR_FORM_MODE, "add");
+            return VIEW_FORM;
         }
 
         carService.createCar(new CreateCarCommand(
@@ -62,7 +66,7 @@ public class CarController {
                 carForm.getVin(),
                 toVignetteCountries(carForm)
         ));
-        return "redirect:/cars";
+        return REDIRECT_CARS;
     }
 
     @GetMapping("/{id}/edit")
@@ -79,8 +83,8 @@ public class CarController {
         form.setVersion(car.getVersion());
 
         model.addAttribute("carForm", form);
-        model.addAttribute("formMode", "edit");
-        return "cars/form";
+        model.addAttribute(ATTR_FORM_MODE, "edit");
+        return VIEW_FORM;
     }
 
     @PostMapping("/{id}")
@@ -91,8 +95,8 @@ public class CarController {
             Model model
     ) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("formMode", "edit");
-            return "cars/form";
+            model.addAttribute(ATTR_FORM_MODE, "edit");
+            return VIEW_FORM;
         }
 
         try {
@@ -104,13 +108,13 @@ public class CarController {
                     carForm.getVin(),
                     carForm.getVersion()
             ));
-            return "redirect:/cars";
+            return REDIRECT_CARS;
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Car not found", ex);
-        } catch (OptimisticLockingFailureException ex) {
+        } catch (OptimisticLockingFailureException _) {
             bindingResult.reject("validation.version.conflict");
-            model.addAttribute("formMode", "edit");
-            return "cars/form";
+            model.addAttribute(ATTR_FORM_MODE, "edit");
+            return VIEW_FORM;
         }
     }
 
@@ -118,7 +122,7 @@ public class CarController {
     public String deactivateCar(@PathVariable Long id) {
         try {
             carService.deactivateCar(id);
-            return "redirect:/cars";
+            return REDIRECT_CARS;
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Car not found", ex);
         }
