@@ -7,15 +7,26 @@ import com.carwatch.domain.schedule.CheckOutcome;
 import com.carwatch.domain.schedule.CheckSchedule;
 import com.carwatch.domain.schedule.CheckScheduleRepository;
 import com.carwatch.domain.schedule.RunStatus;
+import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 @ConditionalOnProperty(name = "carwatch.scheduler.enabled", havingValue = "true", matchIfMissing = true)
 public class ScheduleDispatcher {
+
+    private static final Logger logger = LoggerFactory.getLogger(ScheduleDispatcher.class);
 
     private final CheckScheduleRepository checkScheduleRepository;
     private final CarRepository carRepository;
@@ -24,6 +35,9 @@ public class ScheduleDispatcher {
     private final RunLoggingService runLoggingService;
     private final ObligationUpdateService obligationUpdateService;
     private final NextRunCalculator nextRunCalculator;
+    private final Clock clock;
+    private final ExecutorService scheduleExecutionExecutor;
+    private final int executionParallelism;
 
     public ScheduleDispatcher(
         CheckScheduleRepository checkScheduleRepository,
@@ -32,7 +46,10 @@ public class ScheduleDispatcher {
         CheckExecutor checkExecutor,
         RunLoggingService runLoggingService,
         ObligationUpdateService obligationUpdateService,
-        NextRunCalculator nextRunCalculator
+        NextRunCalculator nextRunCalculator,
+        Clock clock,
+        @Qualifier("scheduleExecutionExecutor") ExecutorService scheduleExecutionExecutor,
+        @Value("${carwatch.scheduler.execution-parallelism:2}") int executionParallelism
     ) {
         this.checkScheduleRepository = checkScheduleRepository;
         this.carRepository = carRepository;
@@ -41,18 +58,60 @@ public class ScheduleDispatcher {
         this.runLoggingService = runLoggingService;
         this.obligationUpdateService = obligationUpdateService;
         this.nextRunCalculator = nextRunCalculator;
+        this.clock = clock;
+        this.scheduleExecutionExecutor = scheduleExecutionExecutor;
+        this.executionParallelism = Math.max(1, executionParallelism);
     }
 
-    @Scheduled(fixedDelay = 30000)
+    @Scheduled(fixedDelayString = "${carwatch.scheduler.poll-delay-ms:30000}")
     public void pollAndExecute() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         List<CheckSchedule> dueSchedules = checkScheduleRepository.findDueSchedules(now);
-        for (CheckSchedule schedule : dueSchedules) {
-            try {
-                processSchedule(schedule);
-            } catch (Exception ignored) {
-                // the dispatcher must continue with remaining schedules
+        for (int start = 0; start < dueSchedules.size(); start += executionParallelism) {
+            List<Future<?>> batch = submitBatch(dueSchedules, start);
+            if (!waitForBatch(batch)) {
+                return;
             }
+        }
+    }
+
+    private List<Future<?>> submitBatch(List<CheckSchedule> dueSchedules, int start) {
+        int endExclusive = Math.min(start + executionParallelism, dueSchedules.size());
+        List<Future<?>> batch = new ArrayList<>(endExclusive - start);
+        for (int index = start; index < endExclusive; index++) {
+            CheckSchedule schedule = dueSchedules.get(index);
+            batch.add(scheduleExecutionExecutor.submit(() -> processScheduleSafely(schedule)));
+        }
+        return batch;
+    }
+
+    private boolean waitForBatch(List<Future<?>> batch) {
+        for (Future<?> future : batch) {
+            try {
+                future.get();
+            } catch (InterruptedException ex) {
+                cancelBatch(batch);
+                Thread.currentThread().interrupt();
+                logger.warn("Schedule polling interrupted while waiting for worker completion", ex);
+                return false;
+            } catch (ExecutionException ex) {
+                logger.error("Unexpected worker failure while processing schedules", ex.getCause());
+            }
+        }
+        return true;
+    }
+
+    private void cancelBatch(List<Future<?>> batch) {
+        for (Future<?> future : batch) {
+            future.cancel(true);
+        }
+    }
+
+    private void processScheduleSafely(CheckSchedule schedule) {
+        try {
+            processSchedule(schedule);
+        } catch (Exception ex) {
+            logger.error("Failed to process schedule {}", schedule.getId(), ex);
         }
     }
 
@@ -62,7 +121,7 @@ public class ScheduleDispatcher {
         }
 
         try {
-            LocalDateTime startedAt = LocalDateTime.now();
+            LocalDateTime startedAt = LocalDateTime.now(clock);
             long startNanos = System.nanoTime();
             CheckOutcome outcome;
 
@@ -78,8 +137,8 @@ public class ScheduleDispatcher {
 
             try {
                 obligationUpdateService.updateFromOutcome(schedule, outcome);
-            } catch (Exception ignored) {
-                // obligation updates should not break scheduling lifecycle
+            } catch (Exception ex) {
+                logger.error("Failed to update obligation for schedule {}", schedule.getId(), ex);
             }
 
             if (schedule.getCronExpression() != null && !schedule.getCronExpression().isBlank()) {
@@ -87,7 +146,7 @@ public class ScheduleDispatcher {
             } else {
                 schedule.setNextRunAt(null);
             }
-            schedule.setUpdatedAt(LocalDateTime.now());
+            schedule.setUpdatedAt(LocalDateTime.now(clock));
             checkScheduleRepository.save(schedule);
         } finally {
             scheduleClaimService.release(schedule);

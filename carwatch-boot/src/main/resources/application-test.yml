@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: "jdbc:sqlite:file:carwatch-test-${random.uuid}?mode=memory&cache=shared"
+
+logging:
+  file:
+    name: "${java.io.tmpdir}carwatch-test-${random.uuid}.log"
+
+carwatch:
+  scheduler:
+    enabled: false

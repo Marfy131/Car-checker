@@ -3,6 +3,7 @@ package com.carwatch.domain.car;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -24,6 +25,7 @@ public class Car {
 
     private boolean active;
 
+    @Version
     private int version;
 
     @Column("created_at")

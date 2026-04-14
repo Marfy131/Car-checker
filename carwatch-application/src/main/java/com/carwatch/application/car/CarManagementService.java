@@ -13,6 +13,7 @@ import com.carwatch.domain.obligation.ObligationType;
 import com.carwatch.domain.schedule.CheckSchedule;
 import com.carwatch.domain.schedule.CheckScheduleRepository;
 import com.carwatch.domain.schedule.CheckType;
+import com.carwatch.domain.schedule.CheckTypeMapping;
 import com.carwatch.domain.vignette.CarVignetteSelection;
 import com.carwatch.domain.vignette.CarVignetteSelectionRepository;
 import com.carwatch.domain.vignette.CountryCode;
@@ -21,18 +22,27 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import org.springframework.dao.OptimisticLockingFailureException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CarManagementService {
 
+    private static final Logger logger = LoggerFactory.getLogger(CarManagementService.class);
+
     private static final String DEFAULT_CRON = "0 0 6 * * *";
     private static final String DEFAULT_ZONE_ID = "Europe/Bratislava";
     private static final int INSURANCE_WARNING_DAYS = 14;
     private static final int STK_EK_WARNING_DAYS = 30;
     private static final int VIGNETTE_WARNING_DAYS = 7;
+    private static final List<CheckType> BASE_CHECK_TYPES = List.of(
+            CheckType.PZP_CHECK,
+            CheckType.COLLISION_INSURANCE_CHECK,
+            CheckType.STK_CHECK,
+            CheckType.EK_CHECK
+    );
 
     private final CarRepository carRepository;
     private final InsurancePolicyRepository insurancePolicyRepository;
@@ -56,6 +66,17 @@ public class CarManagementService {
 
     @Transactional
     public Car createCar(CreateCarCommand command) {
+        Set<CountryCode> vignetteCountries = toCountrySet(command.vignetteCountries());
+        List<CheckType> checkTypes = resolveCheckTypes(vignetteCountries);
+        List<ObligationType> obligationTypes = resolveObligationTypes(vignetteCountries);
+
+        logger.info(
+                "Creating car registrationDate={} vignetteCountries={} vignetteCount={}",
+                command.registrationDate(),
+                vignetteCountries,
+                vignetteCountries.size()
+        );
+
         Car car = new Car();
         car.setName(command.name());
         car.setLicensePlate(command.licensePlate());
@@ -69,7 +90,6 @@ public class CarManagementService {
         insurancePolicyRepository.save(createDefaultInsurancePolicy(carId, PolicyType.PZP));
         insurancePolicyRepository.save(createDefaultInsurancePolicy(carId, PolicyType.COLLISION));
 
-        Set<CountryCode> vignetteCountries = toCountrySet(command.vignetteCountries());
         for (CountryCode country : vignetteCountries) {
             CarVignetteSelection selection = new CarVignetteSelection();
             selection.setCarId(carId);
@@ -78,41 +98,45 @@ public class CarManagementService {
             carVignetteSelectionRepository.save(selection);
         }
 
-        for (CheckType checkType : resolveCheckTypes(vignetteCountries)) {
+        for (CheckType checkType : checkTypes) {
             checkScheduleRepository.save(createDefaultSchedule(carId, checkType));
         }
 
-        for (ObligationType obligationType : resolveObligationTypes(vignetteCountries)) {
+        for (ObligationType obligationType : obligationTypes) {
             obligationStateRepository.save(createDefaultObligationState(carId, obligationType));
         }
+
+        logger.info(
+                "Created car carId={} insurancePolicies={} schedules={} obligations={} vignetteSelections={}",
+                carId,
+                2,
+                checkTypes.size(),
+                obligationTypes.size(),
+                vignetteCountries.size()
+        );
 
         return savedCar;
     }
 
+    @Transactional
     public Car updateCar(UpdateCarCommand command) {
         Car existing = carRepository.findById(command.id())
                 .orElseThrow(() -> new IllegalArgumentException("Car not found: " + command.id()));
-
-        if (existing.getVersion() != command.version()) {
-            throw new OptimisticLockingFailureException(
-                    "Car version mismatch for id " + command.id() + ": expected "
-                            + existing.getVersion() + ", got " + command.version()
-            );
-        }
 
         existing.setName(command.name());
         existing.setLicensePlate(command.licensePlate());
         existing.setRegistrationDate(command.registrationDate());
         existing.setVin(command.vin());
-        existing.setVersion(existing.getVersion() + 1);
+        existing.setVersion(command.version());
         return carRepository.save(existing);
     }
 
-    public Car deactivateCar(Long id) {
+    @Transactional
+    public Car deactivateCar(Long id, int version) {
         Car existing = carRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Car not found: " + id));
         existing.setActive(false);
-        existing.setVersion(existing.getVersion() + 1);
+        existing.setVersion(version);
         return carRepository.save(existing);
     }
 
@@ -154,8 +178,9 @@ public class CarManagementService {
         return switch (checkType) {
             case PZP_CHECK, COLLISION_INSURANCE_CHECK -> INSURANCE_WARNING_DAYS;
             case STK_CHECK, EK_CHECK -> STK_EK_WARNING_DAYS;
-            case VIGNETTE_SK_CHECK, VIGNETTE_CZ_CHECK, VIGNETTE_AT_CHECK -> VIGNETTE_WARNING_DAYS;
-            default -> 0;
+            default -> CheckTypeMapping.findVignetteCountry(checkType)
+                    .map(countryCode -> VIGNETTE_WARNING_DAYS)
+                    .orElse(0);
         };
     }
 
@@ -168,20 +193,11 @@ public class CarManagementService {
     }
 
     private List<CheckType> resolveCheckTypes(Set<CountryCode> vignetteCountries) {
-        List<CheckType> checkTypes = new ArrayList<>();
-        checkTypes.add(CheckType.PZP_CHECK);
-        checkTypes.add(CheckType.COLLISION_INSURANCE_CHECK);
-        checkTypes.add(CheckType.STK_CHECK);
-        checkTypes.add(CheckType.EK_CHECK);
-
-        if (vignetteCountries.contains(CountryCode.SK)) {
-            checkTypes.add(CheckType.VIGNETTE_SK_CHECK);
-        }
-        if (vignetteCountries.contains(CountryCode.CZ)) {
-            checkTypes.add(CheckType.VIGNETTE_CZ_CHECK);
-        }
-        if (vignetteCountries.contains(CountryCode.AT)) {
-            checkTypes.add(CheckType.VIGNETTE_AT_CHECK);
+        List<CheckType> checkTypes = new ArrayList<>(BASE_CHECK_TYPES);
+        for (CountryCode countryCode : CheckTypeMapping.supportedVignetteCountries()) {
+            if (vignetteCountries.contains(countryCode)) {
+                CheckTypeMapping.findVignetteCheckType(countryCode).ifPresent(checkTypes::add);
+            }
         }
         return checkTypes;
     }
@@ -195,19 +211,8 @@ public class CarManagementService {
 
     private List<ObligationType> resolveObligationTypes(Set<CountryCode> vignetteCountries) {
         List<ObligationType> obligationTypes = new ArrayList<>();
-        obligationTypes.add(ObligationType.PZP);
-        obligationTypes.add(ObligationType.COLLISION);
-        obligationTypes.add(ObligationType.STK);
-        obligationTypes.add(ObligationType.EK);
-
-        if (vignetteCountries.contains(CountryCode.SK)) {
-            obligationTypes.add(ObligationType.VIGNETTE_SK);
-        }
-        if (vignetteCountries.contains(CountryCode.CZ)) {
-            obligationTypes.add(ObligationType.VIGNETTE_CZ);
-        }
-        if (vignetteCountries.contains(CountryCode.AT)) {
-            obligationTypes.add(ObligationType.VIGNETTE_AT);
+        for (CheckType checkType : resolveCheckTypes(vignetteCountries)) {
+            CheckTypeMapping.findObligationType(checkType).ifPresent(obligationTypes::add);
         }
         return obligationTypes;
     }

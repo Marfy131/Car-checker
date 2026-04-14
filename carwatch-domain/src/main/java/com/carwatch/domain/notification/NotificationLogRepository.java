@@ -10,6 +10,8 @@ public interface NotificationLogRepository {
 
     List<NotificationLog> findRecent(int limit);
 
+    List<NotificationLog> findReminderLogsByDate(LocalDate date);
+
     boolean existsByCarIdAndObligationTypeAndTypeAndDate(
             Long carId,
             ObligationType obligationType,

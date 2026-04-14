@@ -28,6 +28,15 @@ public class NotificationLogRepositoryAdapter implements NotificationLogReposito
     }
 
     @Override
+    public List<NotificationLog> findReminderLogsByDate(LocalDate date) {
+        return jdbc.findReminderLogsByDate(
+                date.toString(),
+                NotificationType.EXPIRY_WARNING.name(),
+                NotificationType.EXPIRED.name()
+        );
+    }
+
+    @Override
     public boolean existsByCarIdAndObligationTypeAndTypeAndDate(
             Long carId,
             ObligationType obligationType,

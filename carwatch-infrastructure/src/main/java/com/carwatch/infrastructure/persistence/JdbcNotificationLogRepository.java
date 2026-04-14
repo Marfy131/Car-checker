@@ -14,6 +14,18 @@ public interface JdbcNotificationLogRepository extends CrudRepository<Notificati
     List<NotificationLog> findRecent(@Param("limit") int limit);
 
     @Query("""
+            SELECT *
+            FROM notification_log
+            WHERE dedupe_date = :date
+              AND (notification_type = :expiryWarningType OR notification_type = :expiredType)
+            """)
+    List<NotificationLog> findReminderLogsByDate(
+            @Param("date") String date,
+            @Param("expiryWarningType") String expiryWarningType,
+            @Param("expiredType") String expiredType
+    );
+
+    @Query("""
             SELECT COUNT(*) > 0
             FROM notification_log
             WHERE car_id = :carId

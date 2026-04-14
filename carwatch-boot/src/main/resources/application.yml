@@ -42,6 +42,15 @@ logging:
 carwatch:
   scheduler:
     enabled: true
+    poll-delay-ms: 30000
+    claim-lock-ttl: PT5M
+    execution-parallelism: 2
+  history:
+    page-size: 100
+  notifications:
+    page-size: 100
+    daily-summary:
+      recent-runs: 10
   email:
     enabled: ${CARWATCH_EMAIL_ENABLED:false}
     from: ${CARWATCH_EMAIL_FROM:carwatcher@localhost}

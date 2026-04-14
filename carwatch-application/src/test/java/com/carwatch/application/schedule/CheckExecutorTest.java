@@ -10,6 +10,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CheckExecutorTest {
 
@@ -38,7 +39,26 @@ class CheckExecutorTest {
         assertThat(result.findingsJson()).isNull();
     }
 
+    @Test
+    void constructorFailsFastWhenDuplicateProvidersAreRegisteredForSameType() {
+        VehicleCheckProvider first = new TestProvider(CheckType.PZP_CHECK, new CheckOutcome(RunStatus.SUCCESS, "first", null, null));
+        VehicleCheckProvider second = new AlternateTestProvider(CheckType.PZP_CHECK, new CheckOutcome(RunStatus.SUCCESS, "second", null, null));
+
+        assertThatThrownBy(() -> new CheckExecutor(List.of(first, second)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Duplicate provider registration for checkType=PZP_CHECK")
+                .hasMessageContaining(TestProvider.class.getName())
+                .hasMessageContaining(AlternateTestProvider.class.getName());
+    }
+
     private record TestProvider(CheckType supportedType, CheckOutcome outcome) implements VehicleCheckProvider {
+        @Override
+        public CheckOutcome execute(CheckCommand command) {
+            return outcome;
+        }
+    }
+
+    private record AlternateTestProvider(CheckType supportedType, CheckOutcome outcome) implements VehicleCheckProvider {
         @Override
         public CheckOutcome execute(CheckCommand command) {
             return outcome;

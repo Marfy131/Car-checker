@@ -1,5 +1,6 @@
 package com.carwatch.web.controller;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -12,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 import com.carwatch.application.car.CarManagementService;
 import com.carwatch.application.car.CreateCarCommand;
@@ -45,13 +47,16 @@ class CarControllerWebMvcTest {
         Car car = new Car();
         car.setId(11L);
         car.setName("Octavia");
+        car.setVersion(5);
         when(carManagementService.findAll()).thenReturn(List.of(car));
 
         mockMvc.perform(get("/cars"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("cars/list"))
                 .andExpect(model().attributeExists("cars"))
-                .andExpect(model().attribute("cars", hasSize(1)));
+                .andExpect(model().attribute("cars", hasSize(1)))
+                .andExpect(content().string(containsString("action=\"/cars/11/deactivate\"")))
+                .andExpect(content().string(containsString("type=\"hidden\" name=\"version\" value=\"5\"")));
     }
 
     @Test
@@ -146,12 +151,43 @@ class CarControllerWebMvcTest {
 
     @Test
     void deactivateRedirectsOnSuccess() throws Exception {
-        when(carManagementService.deactivateCar(3L)).thenReturn(new Car());
+        when(carManagementService.deactivateCar(3L, 4)).thenReturn(new Car());
 
-        mockMvc.perform(post("/cars/3/deactivate"))
+        mockMvc.perform(post("/cars/3/deactivate")
+                        .param("version", "4"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/cars"));
 
-        verify(carManagementService).deactivateCar(3L);
+        verify(carManagementService).deactivateCar(3L, 4);
+    }
+
+    @Test
+    void deactivateReturnsEditFormOnOptimisticLockFailure() throws Exception {
+        Car car = new Car();
+        car.setId(3L);
+        car.setName("Octavia");
+        car.setLicensePlate("BA123AA");
+        car.setRegistrationDate(LocalDate.parse("2024-01-10"));
+        car.setVin("VIN123456789");
+        car.setVersion(4);
+        doThrow(new OptimisticLockingFailureException("conflict"))
+                .when(carManagementService).deactivateCar(3L, 3);
+        when(carManagementService.findById(3L)).thenReturn(Optional.of(car));
+
+        mockMvc.perform(post("/cars/3/deactivate")
+                        .param("version", "3"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("cars/form"))
+                .andExpect(model().attribute("formMode", "edit"))
+                .andExpect(model().attributeHasErrors("carForm"))
+                .andExpect(model().attributeHasFieldErrors("carForm"))
+                .andExpect(model().attribute("carForm", org.hamcrest.Matchers.allOf(
+                        org.hamcrest.Matchers.hasProperty("id", org.hamcrest.Matchers.is(3L)),
+                        org.hamcrest.Matchers.hasProperty("name", org.hamcrest.Matchers.is("Octavia")),
+                        org.hamcrest.Matchers.hasProperty("licensePlate", org.hamcrest.Matchers.is("BA123AA")),
+                        org.hamcrest.Matchers.hasProperty("registrationDate", org.hamcrest.Matchers.is(LocalDate.parse("2024-01-10"))),
+                        org.hamcrest.Matchers.hasProperty("vin", org.hamcrest.Matchers.is("VIN123456789")),
+                        org.hamcrest.Matchers.hasProperty("version", org.hamcrest.Matchers.is(4))
+                )));
     }
 }

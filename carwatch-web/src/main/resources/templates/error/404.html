@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
+    <section class="py-4">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h1 class="h3 mb-3" th:text="#{error.notFound.title}">Page not found</h1>
+                    <p class="mb-3" th:text="#{error.notFound.description}">
+                        The requested page no longer exists or the link is invalid.
+                    </p>
+                    <a class="btn btn-primary" th:href="@{/}" th:text="#{error.action.home}">Go to dashboard</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+</body>
+</html>

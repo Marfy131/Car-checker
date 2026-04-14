@@ -6,42 +6,35 @@ import com.carwatch.domain.obligation.ObligationStateRepository;
 import com.carwatch.domain.obligation.ObligationType;
 import com.carwatch.domain.schedule.CheckOutcome;
 import com.carwatch.domain.schedule.CheckSchedule;
-import com.carwatch.domain.schedule.CheckType;
+import com.carwatch.domain.schedule.CheckTypeMapping;
 import com.carwatch.domain.schedule.RunStatus;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.EnumMap;
-import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ObligationUpdateService {
 
+    private static final Logger logger = LoggerFactory.getLogger(ObligationUpdateService.class);
+
     private static final String SOURCE_SYSTEM = "scheduler";
 
-    private static final Map<CheckType, ObligationType> TYPE_MAPPING = new EnumMap<>(CheckType.class);
-
-    static {
-        TYPE_MAPPING.put(CheckType.PZP_CHECK, ObligationType.PZP);
-        TYPE_MAPPING.put(CheckType.COLLISION_INSURANCE_CHECK, ObligationType.COLLISION);
-        TYPE_MAPPING.put(CheckType.STK_CHECK, ObligationType.STK);
-        TYPE_MAPPING.put(CheckType.EK_CHECK, ObligationType.EK);
-        TYPE_MAPPING.put(CheckType.VIGNETTE_SK_CHECK, ObligationType.VIGNETTE_SK);
-        TYPE_MAPPING.put(CheckType.VIGNETTE_CZ_CHECK, ObligationType.VIGNETTE_CZ);
-        TYPE_MAPPING.put(CheckType.VIGNETTE_AT_CHECK, ObligationType.VIGNETTE_AT);
-    }
-
     private final ObligationStateRepository obligationStateRepository;
+    private final Clock clock;
 
-    public ObligationUpdateService(ObligationStateRepository obligationStateRepository) {
+    public ObligationUpdateService(ObligationStateRepository obligationStateRepository, Clock clock) {
         this.obligationStateRepository = obligationStateRepository;
+        this.clock = clock;
     }
 
     @Transactional
     public void updateFromOutcome(CheckSchedule schedule, CheckOutcome outcome) {
-        ObligationType obligationType = TYPE_MAPPING.get(schedule.getCheckType());
+        ObligationType obligationType = CheckTypeMapping.findObligationType(schedule.getCheckType()).orElse(null);
         if (obligationType == null || schedule.getCarId() == null) {
             return;
         }
@@ -50,7 +43,7 @@ public class ObligationUpdateService {
             .findByCarIdAndObligationType(schedule.getCarId(), obligationType)
             .orElseGet(() -> initState(schedule.getCarId(), obligationType));
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         state.setLastCheckedAt(now);
         state.setSourceSystem(SOURCE_SYSTEM);
         state.setDetailsJson(outcome.findingsJson());
@@ -74,10 +67,33 @@ public class ObligationUpdateService {
 
         state.setUpdatedAt(now);
         obligationStateRepository.save(state);
+
+        if (outcome.status() == RunStatus.ERROR || outcome.expiryDateFound() == null) {
+            logger.warn(
+                    "Updated obligation from non-successful outcome carId={} checkType={} obligationType={} outcomeStatus={} obligationStatus={} expiryDate={}",
+                    schedule.getCarId(),
+                    schedule.getCheckType(),
+                    obligationType,
+                    outcome.status(),
+                    state.getStatus(),
+                    state.getExpiryDate()
+            );
+            return;
+        }
+
+        logger.debug(
+                "Updated obligation state carId={} checkType={} obligationType={} outcomeStatus={} obligationStatus={} expiryDate={}",
+                schedule.getCarId(),
+                schedule.getCheckType(),
+                obligationType,
+                outcome.status(),
+                state.getStatus(),
+                state.getExpiryDate()
+        );
     }
 
     private ObligationState initState(Long carId, ObligationType obligationType) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         ObligationState state = new ObligationState();
         state.setCarId(carId);
         state.setObligationType(obligationType);
@@ -88,7 +104,7 @@ public class ObligationUpdateService {
     }
 
     private ExpiryStatus resolveExpiryStatus(LocalDate expiryDate, int warningDaysBefore) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         if (expiryDate.isBefore(today)) {
             return ExpiryStatus.EXPIRED;
         }

@@ -19,13 +19,9 @@
 <div th:each="car : ${cars}">
     <h4 th:text="|${car.name} (${car.licensePlate})|">Car (XX-000-XX)</h4>
     <ul>
-        <li>PZP: <span th:text="${car.pzpExpiry}">-</span> [<span th:text="${car.pzpStatus}">UNKNOWN</span>]</li>
-        <li>Collision insurance: <span th:text="${car.collisionExpiry}">-</span> [<span th:text="${car.collisionStatus}">UNKNOWN</span>]</li>
-        <li>STK: <span th:text="${car.stkExpiry}">-</span> [<span th:text="${car.stkStatus}">UNKNOWN</span>]</li>
-        <li>EK: <span th:text="${car.ekExpiry}">-</span> [<span th:text="${car.ekStatus}">UNKNOWN</span>]</li>
-        <li th:if="${car.skVignetteEnabled}">Vignette SK: <span th:text="${car.skVignetteExpiry}">-</span> [<span th:text="${car.skVignetteStatus}">UNKNOWN</span>]</li>
-        <li th:if="${car.czVignetteEnabled}">Vignette CZ: <span th:text="${car.czVignetteExpiry}">-</span> [<span th:text="${car.czVignetteStatus}">UNKNOWN</span>]</li>
-        <li th:if="${car.atVignetteEnabled}">Vignette AT: <span th:text="${car.atVignetteExpiry}">-</span> [<span th:text="${car.atVignetteStatus}">UNKNOWN</span>]</li>
+        <li th:each="item : ${car.items}">
+            <span th:text="${item.label}">Label</span>: <span th:text="${item.expiry}">-</span> [<span th:text="${item.status}">UNKNOWN</span>]
+        </li>
     </ul>
 </div>
 

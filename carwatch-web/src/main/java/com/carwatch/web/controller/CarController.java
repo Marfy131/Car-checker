@@ -13,11 +13,13 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -26,6 +28,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class CarController {
 
     private static final String ATTR_FORM_MODE = "formMode";
+    private static final String ATTR_CAR_FORM = "carForm";
     private static final String VIEW_FORM = "cars/form";
     private static final String REDIRECT_CARS = "redirect:/cars";
 
@@ -43,17 +46,16 @@ public class CarController {
 
     @GetMapping("/new")
     public String showCreateForm(Model model) {
-        model.addAttribute("carForm", new CarForm());
+        model.addAttribute(ATTR_CAR_FORM, new CarForm());
         model.addAttribute(ATTR_FORM_MODE, "add");
         return VIEW_FORM;
     }
 
     @PostMapping
     public String createCar(
-            @Valid @ModelAttribute("carForm") CarForm carForm,
+            @Valid @ModelAttribute(ATTR_CAR_FORM) CarForm carForm,
             BindingResult bindingResult,
-            Model model
-    ) {
+            Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute(ATTR_FORM_MODE, "add");
             return VIEW_FORM;
@@ -64,8 +66,7 @@ public class CarController {
                 carForm.getLicensePlate(),
                 carForm.getRegistrationDate(),
                 carForm.getVin(),
-                toVignetteCountries(carForm)
-        ));
+                toVignetteCountries(carForm)));
         return REDIRECT_CARS;
     }
 
@@ -74,26 +75,16 @@ public class CarController {
         Car car = carService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Car not found"));
 
-        CarForm form = new CarForm();
-        form.setId(car.getId());
-        form.setName(car.getName());
-        form.setLicensePlate(car.getLicensePlate());
-        form.setRegistrationDate(car.getRegistrationDate());
-        form.setVin(car.getVin());
-        form.setVersion(car.getVersion());
-
-        model.addAttribute("carForm", form);
-        model.addAttribute(ATTR_FORM_MODE, "edit");
+        populateEditForm(model, car);
         return VIEW_FORM;
     }
 
     @PostMapping("/{id}")
     public String updateCar(
             @PathVariable Long id,
-            @Valid @ModelAttribute("carForm") CarForm carForm,
+            @Valid @ModelAttribute(ATTR_CAR_FORM) CarForm carForm,
             BindingResult bindingResult,
-            Model model
-    ) {
+            Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute(ATTR_FORM_MODE, "edit");
             return VIEW_FORM;
@@ -106,8 +97,7 @@ public class CarController {
                     carForm.getLicensePlate(),
                     carForm.getRegistrationDate(),
                     carForm.getVin(),
-                    carForm.getVersion()
-            ));
+                    carForm.getVersion()));
             return REDIRECT_CARS;
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Car not found", ex);
@@ -119,13 +109,35 @@ public class CarController {
     }
 
     @PostMapping("/{id}/deactivate")
-    public String deactivateCar(@PathVariable Long id) {
+    public String deactivateCar(@PathVariable Long id, @RequestParam int version, Model model) {
         try {
-            carService.deactivateCar(id);
+            carService.deactivateCar(id, version);
             return REDIRECT_CARS;
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Car not found", ex);
+        } catch (OptimisticLockingFailureException _) {
+            Car car = carService.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Car not found"));
+            CarForm form = populateEditForm(model, car);
+            BindingResult bindingResult = new BeanPropertyBindingResult(form, ATTR_CAR_FORM);
+            bindingResult.reject("validation.version.conflict");
+            model.addAttribute(BindingResult.MODEL_KEY_PREFIX + ATTR_CAR_FORM, bindingResult);
+            return VIEW_FORM;
         }
+    }
+
+    private CarForm populateEditForm(Model model, Car car) {
+        CarForm form = new CarForm();
+        form.setId(car.getId());
+        form.setName(car.getName());
+        form.setLicensePlate(car.getLicensePlate());
+        form.setRegistrationDate(car.getRegistrationDate());
+        form.setVin(car.getVin());
+        form.setVersion(car.getVersion());
+
+        model.addAttribute(ATTR_CAR_FORM, form);
+        model.addAttribute(ATTR_FORM_MODE, "edit");
+        return form;
     }
 
     private Set<CountryCode> toVignetteCountries(CarForm carForm) {

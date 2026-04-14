@@ -4,27 +4,48 @@ import com.carwatch.domain.schedule.CheckSchedule;
 import com.carwatch.domain.schedule.CheckScheduleRepository;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class ScheduleClaimService {
 
+    private static final Logger logger = LoggerFactory.getLogger(ScheduleClaimService.class);
+
     private final CheckScheduleRepository checkScheduleRepository;
     private final String lockOwnerPrefix;
+    private final Clock clock;
+    private final Duration claimLockTtl;
 
-    public ScheduleClaimService(CheckScheduleRepository checkScheduleRepository) {
+    @Autowired
+    public ScheduleClaimService(
+        CheckScheduleRepository checkScheduleRepository,
+        Clock clock,
+        @Value("${carwatch.scheduler.claim-lock-ttl:PT5M}") Duration claimLockTtl
+    ) {
         this.checkScheduleRepository = checkScheduleRepository;
+        this.clock = clock;
+        this.claimLockTtl = claimLockTtl;
         this.lockOwnerPrefix = resolveHostName() + "-" + UUID.randomUUID();
+    }
+
+    ScheduleClaimService(CheckScheduleRepository checkScheduleRepository, Clock clock) {
+        this(checkScheduleRepository, clock, Duration.ofMinutes(5));
     }
 
     @Transactional
     public boolean claim(CheckSchedule schedule) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         Optional<CheckSchedule> currentOptional = checkScheduleRepository.findById(schedule.getId());
         if (currentOptional.isEmpty()) {
             return false;
@@ -35,7 +56,7 @@ public class ScheduleClaimService {
             return false;
         }
 
-        current.setLockUntil(now.plusMinutes(5));
+        current.setLockUntil(now.plus(claimLockTtl));
         current.setLockOwner(lockOwner());
         current.setUpdatedAt(now);
 
@@ -44,6 +65,7 @@ public class ScheduleClaimService {
             copyState(claimed, schedule);
             return true;
         } catch (OptimisticLockingFailureException _) {
+            logger.debug("Failed to claim schedule {} due to optimistic locking conflict", schedule.getId());
             return false;
         }
     }
@@ -62,13 +84,13 @@ public class ScheduleClaimService {
 
         current.setLockUntil(null);
         current.setLockOwner(null);
-        current.setUpdatedAt(LocalDateTime.now());
+        current.setUpdatedAt(LocalDateTime.now(clock));
 
         try {
             CheckSchedule released = checkScheduleRepository.save(current);
             copyState(released, schedule);
         } catch (OptimisticLockingFailureException _) {
-            // another worker already modified the schedule; release can be ignored here
+            logger.debug("Failed to release schedule {} due to optimistic locking conflict, another worker took over", schedule.getId());
         }
     }
 

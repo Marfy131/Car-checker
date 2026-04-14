@@ -5,29 +5,20 @@ import java.util.List;
 public record DailySummaryModel(
         String generatedAt,
         List<String> warnings,
-        List<CarSummaryLine> cars,
+        List<CarSummary> cars,
         List<String> recentRuns
 ) {
-    public record CarSummaryLine(
+    public record CarSummary(
             String name,
             String licensePlate,
-            String pzpExpiry,
-            String pzpStatus,
-            String collisionExpiry,
-            String collisionStatus,
-            String stkExpiry,
-            String stkStatus,
-            String ekExpiry,
-            String ekStatus,
-            boolean skVignetteEnabled,
-            String skVignetteExpiry,
-            String skVignetteStatus,
-            boolean czVignetteEnabled,
-            String czVignetteExpiry,
-            String czVignetteStatus,
-            boolean atVignetteEnabled,
-            String atVignetteExpiry,
-            String atVignetteStatus
+            List<SummaryItem> items
+    ) {
+    }
+
+    public record SummaryItem(
+            String label,
+            String expiry,
+            String status
     ) {
     }
 }
