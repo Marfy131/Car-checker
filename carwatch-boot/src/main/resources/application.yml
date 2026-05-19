@@ -1,6 +1,10 @@
 spring:
   application:
     name: carwatch
+  messages:
+    basename: messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
   datasource:
     url: jdbc:sqlite:data/carwatch.db
     driver-class-name: org.sqlite.JDBC
@@ -8,12 +12,12 @@ spring:
       maximum-pool-size: 4
       minimum-idle: 1
   flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
+    enabled: false
   sql:
     init:
       mode: always
+      schema-locations: classpath:db/schema.sql
+      data-locations: classpath:db/seed.sql
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}

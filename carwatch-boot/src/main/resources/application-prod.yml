@@ -6,9 +6,7 @@ spring:
       maximum-pool-size: ${CARWATCH_DB_MAX_POOL:2}
       minimum-idle: ${CARWATCH_DB_MIN_IDLE:0}
   flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
+    enabled: false
   mail:
     host: ${MAIL_HOST:localhost}
     port: ${MAIL_PORT:25}
