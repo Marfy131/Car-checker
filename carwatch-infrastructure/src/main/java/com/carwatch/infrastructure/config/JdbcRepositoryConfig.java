@@ -23,6 +23,8 @@ public class JdbcRepositoryConfig {
         return new JdbcCustomConversions(List.of(
             new SqliteConverters.StringToLocalDateTime(),
             new SqliteConverters.LocalDateTimeToString(),
+            new SqliteConverters.StringToLocalDate(),
+            new SqliteConverters.LocalDateToString(),
             new SqliteConverters.IntegerToBoolean(),
             new SqliteConverters.BooleanToInteger()
         ));
