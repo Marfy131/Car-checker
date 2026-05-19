@@ -4,7 +4,7 @@ services:
   app:
     build: .
     ports:
-      - "${APP_PORT:-8180}:8080"
+      - "${APP_PORT:-8080}:8080"
     volumes:
       - db:/opt/carwatch/data
       - logs:/opt/carwatch/logs

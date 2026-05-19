@@ -5,13 +5,14 @@ services:
   maildev:
     image: maildev/maildev:2.1.0
     ports:
-      - "1180:1080"   # Web UI → http://localhost:1080
+      - "1025:1025"   # SMTP
+      - "1080:1080"   # Web UI → http://localhost:1080
     restart: unless-stopped
 
   app:
     build: .
     ports:
-      - "8180:8080"
+      - "8080:8080"
     volumes:
       - db:/opt/carwatch/data
       - logs:/opt/carwatch/logs
