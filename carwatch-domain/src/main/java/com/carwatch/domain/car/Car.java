@@ -28,7 +28,7 @@ public class Car {
     private boolean active;
 
     @Version
-    private int version;
+    private Integer version;
 
     @CreatedDate
     @Column("created_at")
@@ -86,11 +86,11 @@ public class Car {
         this.active = active;
     }
 
-    public int getVersion() {
+    public Integer getVersion() {
         return version;
     }
 
-    public void setVersion(int version) {
+    public void setVersion(Integer version) {
         this.version = version;
     }
 

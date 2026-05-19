@@ -44,7 +44,7 @@ public class CheckSchedule {
     private String lockOwner;
 
     @Version
-    private int version;
+    private Integer version;
 
     @CreatedDate
     @Column("created_at")
@@ -142,11 +142,11 @@ public class CheckSchedule {
         this.lockOwner = lockOwner;
     }
 
-    public int getVersion() {
+    public Integer getVersion() {
         return version;
     }
 
-    public void setVersion(int version) {
+    public void setVersion(Integer version) {
         this.version = version;
     }
 
