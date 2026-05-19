@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">
+            <span th:text="#{obligation.form.title}">Vehicle Obligations</span>
+            &mdash; <span th:text="${car.name}">Car</span>
+            <small class="text-muted fw-normal" th:text="${car.licensePlate}">ECV</small>
+        </h1>
+        <a class="btn btn-outline-secondary" th:href="@{/cars}" th:text="#{car.form.cancel}">Back</a>
+    </div>
+
+    <div class="alert alert-success" th:if="${savedOk}" th:text="#{obligation.form.saved}">Saved.</div>
+
+    <form th:object="${obligationForm}" th:action="@{/cars/{id}/obligations(id=${car.id})}" method="post">
+
+        <table class="table table-bordered align-middle">
+            <thead class="table-light">
+            <tr>
+                <th th:text="#{obligation.form.type}">Type</th>
+                <th th:text="#{obligation.form.expiry}">Expiry date</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            <tr th:if="${activeTypes.contains(T(com.carwatch.domain.obligation.ObligationType).PZP)}">
+                <td th:text="#{obligation.type.pzp}">PZP</td>
+                <td><input type="date" class="form-control" th:field="*{pzpExpiry}"/></td>
+            </tr>
+
+            <tr th:if="${activeTypes.contains(T(com.carwatch.domain.obligation.ObligationType).COLLISION)}">
+                <td th:text="#{obligation.type.collision}">Collision insurance</td>
+                <td><input type="date" class="form-control" th:field="*{collisionExpiry}"/></td>
+            </tr>
+
+            <tr th:if="${activeTypes.contains(T(com.carwatch.domain.obligation.ObligationType).STK)}">
+                <td th:text="#{obligation.type.stk}">STK</td>
+                <td><input type="date" class="form-control" th:field="*{stkExpiry}"/></td>
+            </tr>
+
+            <tr th:if="${activeTypes.contains(T(com.carwatch.domain.obligation.ObligationType).EK)}">
+                <td th:text="#{obligation.type.ek}">EK</td>
+                <td><input type="date" class="form-control" th:field="*{ekExpiry}"/></td>
+            </tr>
+
+            <tr th:if="${activeTypes.contains(T(com.carwatch.domain.obligation.ObligationType).VIGNETTE_SK)}">
+                <td th:text="#{obligation.type.vignette.sk}">Vignette SK</td>
+                <td><input type="date" class="form-control" th:field="*{vignetteSkExpiry}"/></td>
+            </tr>
+
+            <tr th:if="${activeTypes.contains(T(com.carwatch.domain.obligation.ObligationType).VIGNETTE_CZ)}">
+                <td th:text="#{obligation.type.vignette.cz}">Vignette CZ</td>
+                <td><input type="date" class="form-control" th:field="*{vignetteCzExpiry}"/></td>
+            </tr>
+
+            <tr th:if="${activeTypes.contains(T(com.carwatch.domain.obligation.ObligationType).VIGNETTE_AT)}">
+                <td th:text="#{obligation.type.vignette.at}">Vignette AT</td>
+                <td><input type="date" class="form-control" th:field="*{vignetteAtExpiry}"/></td>
+            </tr>
+
+            <tr th:if="${activeTypes.contains(T(com.carwatch.domain.obligation.ObligationType).VIGNETTE_HU)}">
+                <td th:text="#{obligation.type.vignette.hu}">Vignette HU</td>
+                <td><input type="date" class="form-control" th:field="*{vignetteHuExpiry}"/></td>
+            </tr>
+
+            </tbody>
+        </table>
+
+        <button type="submit" class="btn btn-primary" th:text="#{obligation.form.save}">Save</button>
+
+    </form>
+</div>
+</body>
+</html>

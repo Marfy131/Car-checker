@@ -33,6 +33,9 @@
                     <a class="btn btn-sm btn-outline-secondary"
                        th:href="@{/cars/{id}/edit(id=${car.id})}"
                        th:text="#{car.list.edit}">Edit</a>
+                    <a class="btn btn-sm btn-outline-primary"
+                       th:href="@{/cars/{id}/obligations(id=${car.id})}"
+                       th:text="#{car.list.obligations}">Obligations</a>
                     <form th:action="@{/cars/{id}/deactivate(id=${car.id})}" method="post" th:if="${car.active}">
                         <input type="hidden" name="version" th:value="${car.version}">
                         <button type="submit" class="btn btn-sm btn-outline-danger" th:text="#{car.list.deactivate}">
