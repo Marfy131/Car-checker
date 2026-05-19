@@ -4,11 +4,19 @@ FROM maven:3.9.14-eclipse-temurin-25-alpine AS builder
 
 WORKDIR /build
 
-# Copy all source files
-COPY . .
+# Download dependencies first — this layer is cached as long as pom.xml files don't change.
+COPY pom.xml .
+COPY carwatch-domain/pom.xml carwatch-domain/
+COPY carwatch-application/pom.xml carwatch-application/
+COPY carwatch-infrastructure/pom.xml carwatch-infrastructure/
+COPY carwatch-web/pom.xml carwatch-web/
+COPY carwatch-boot/pom.xml carwatch-boot/
+COPY carwatch-reports/pom.xml carwatch-reports/
+RUN mvn dependency:go-offline -q
 
-# Build the project; only carwatch-boot will be used at runtime
-RUN mvn clean package -DskipTests -q
+# Copy source and build; integration tests run against in-memory SQLite.
+COPY . .
+RUN mvn clean package -q
 
 
 # Stage 2: Runtime
