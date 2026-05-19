@@ -1,5 +1,7 @@
 package com.carwatch.web.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -13,6 +15,8 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @ControllerAdvice(annotations = Controller.class)
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ResponseStatusException.class)
     public ModelAndView handleResponseStatusException(ResponseStatusException ex) {
@@ -37,6 +41,7 @@ public class GlobalExceptionHandler {
         if (ex instanceof ErrorResponse errorResponse && errorResponse.getStatusCode().is4xxClientError()) {
             throw ex;
         }
+        log.error("Unhandled exception", ex);
         return errorView(HttpStatus.INTERNAL_SERVER_ERROR, "error/500");
     }
 

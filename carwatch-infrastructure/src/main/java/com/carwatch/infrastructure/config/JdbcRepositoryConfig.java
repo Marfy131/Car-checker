@@ -1,16 +1,27 @@
 package com.carwatch.infrastructure.config;
 
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
+import org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 
 @Configuration
 @EnableJdbcRepositories(basePackages = "com.carwatch.infrastructure.persistence")
-public class JdbcRepositoryConfig {
+public class JdbcRepositoryConfig extends AbstractJdbcConfiguration {
 
     @Bean
     JdbcDialect jdbcDialect() {
         return SqliteDialect.INSTANCE;
+    }
+
+    @Override
+    public JdbcCustomConversions jdbcCustomConversions() {
+        return new JdbcCustomConversions(List.of(
+            new SqliteLocalDateTimeConverters.StringToLocalDateTime(),
+            new SqliteLocalDateTimeConverters.LocalDateTimeToString()
+        ));
     }
 }
