@@ -19,8 +19,10 @@ public class JdbcRepositoryConfig {
     @Bean
     JdbcCustomConversions jdbcCustomConversions() {
         return new JdbcCustomConversions(List.of(
-            new SqliteLocalDateTimeConverters.StringToLocalDateTime(),
-            new SqliteLocalDateTimeConverters.LocalDateTimeToString()
+            new SqliteConverters.StringToLocalDateTime(),
+            new SqliteConverters.LocalDateTimeToString(),
+            new SqliteConverters.IntegerToBoolean(),
+            new SqliteConverters.BooleanToInteger()
         ));
     }
 }
