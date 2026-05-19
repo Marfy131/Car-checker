@@ -26,6 +26,7 @@ import com.carwatch.domain.schedule.CheckType;
 import com.carwatch.domain.vignette.CarVignetteSelection;
 import com.carwatch.domain.vignette.CarVignetteSelectionRepository;
 import com.carwatch.domain.vignette.CountryCode;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -76,7 +77,8 @@ class CarManagementServiceTest {
                 insurancePolicyRepository,
                 carVignetteSelectionRepository,
                 checkScheduleRepository,
-                obligationStateRepository
+                obligationStateRepository,
+                Clock.systemDefaultZone()
         );
     }
 
