@@ -38,7 +38,8 @@ class EnumCoverageTest {
                 ObligationType.EK,
                 ObligationType.VIGNETTE_SK,
                 ObligationType.VIGNETTE_CZ,
-                ObligationType.VIGNETTE_AT
+                ObligationType.VIGNETTE_AT,
+                ObligationType.VIGNETTE_HU
         );
         assertThat(CheckType.values()).contains(
                 CheckType.PZP_CHECK,
@@ -48,10 +49,11 @@ class EnumCoverageTest {
                 CheckType.VIGNETTE_SK_CHECK,
                 CheckType.VIGNETTE_CZ_CHECK,
                 CheckType.VIGNETTE_AT_CHECK,
+                CheckType.VIGNETTE_HU_CHECK,
                 CheckType.DAILY_SUMMARY_EMAIL,
                 CheckType.DAILY_REMINDER_SCAN
         );
         assertThat(RunStatus.values()).containsExactly(RunStatus.SUCCESS, RunStatus.WARNING, RunStatus.ERROR, RunStatus.NO_DATA);
-        assertThat(CountryCode.values()).containsExactly(CountryCode.SK, CountryCode.CZ, CountryCode.AT);
+        assertThat(CountryCode.values()).containsExactly(CountryCode.SK, CountryCode.CZ, CountryCode.AT, CountryCode.HU);
     }
 }

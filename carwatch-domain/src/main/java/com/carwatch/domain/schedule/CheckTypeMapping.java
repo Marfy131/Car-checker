@@ -21,6 +21,7 @@ public final class CheckTypeMapping {
         register(CheckType.VIGNETTE_SK_CHECK, ObligationType.VIGNETTE_SK, CountryCode.SK);
         register(CheckType.VIGNETTE_CZ_CHECK, ObligationType.VIGNETTE_CZ, CountryCode.CZ);
         register(CheckType.VIGNETTE_AT_CHECK, ObligationType.VIGNETTE_AT, CountryCode.AT);
+        register(CheckType.VIGNETTE_HU_CHECK, ObligationType.VIGNETTE_HU, CountryCode.HU);
     }
 
     private CheckTypeMapping() {

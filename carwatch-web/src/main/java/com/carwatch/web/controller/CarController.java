@@ -151,6 +151,9 @@ public class CarController {
         if (carForm.isVignetteAt()) {
             countries.add(CountryCode.AT);
         }
+        if (carForm.isVignetteHu()) {
+            countries.add(CountryCode.HU);
+        }
         return countries;
     }
 }

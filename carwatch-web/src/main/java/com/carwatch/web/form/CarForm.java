@@ -29,6 +29,7 @@ public class CarForm {
     private boolean vignetteSk;
     private boolean vignetteCz;
     private boolean vignetteAt;
+    private boolean vignetteHu;
     private int version;
 
     public Long getId() {
@@ -93,6 +94,14 @@ public class CarForm {
 
     public void setVignetteAt(boolean vignetteAt) {
         this.vignetteAt = vignetteAt;
+    }
+    
+    public boolean isVignetteHu() {
+        return vignetteHu;
+    }
+
+    public void setVignetteHu(boolean vignetteHu) {
+        this.vignetteHu = vignetteHu;
     }
 
     public int getVersion() {

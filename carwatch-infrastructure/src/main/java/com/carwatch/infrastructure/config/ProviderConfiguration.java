@@ -39,6 +39,11 @@ public class ProviderConfiguration {
     }
 
     @Bean
+    VehicleCheckProvider vignetteHuCheckProvider(ObligationStateRepository obligationStateRepository) {
+        return new ObligationStateVehicleCheckProvider(CheckType.VIGNETTE_HU_CHECK, obligationStateRepository);
+    }
+
+    @Bean
     VehicleCheckProvider dailyReminderScanProvider(
             ReminderNotificationService reminderNotificationService,
             AppSettingRepository appSettingRepository

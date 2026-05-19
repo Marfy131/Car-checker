@@ -13,12 +13,18 @@ class CheckTypeMappingTest {
     @Test
     void findsObligationTypeForMappedCheckTypes() {
         assertEquals(ObligationType.PZP, CheckTypeMapping.findObligationType(CheckType.PZP_CHECK).orElseThrow());
-        assertEquals(ObligationType.COLLISION, CheckTypeMapping.findObligationType(CheckType.COLLISION_INSURANCE_CHECK).orElseThrow());
+        assertEquals(ObligationType.COLLISION,
+                CheckTypeMapping.findObligationType(CheckType.COLLISION_INSURANCE_CHECK).orElseThrow());
         assertEquals(ObligationType.STK, CheckTypeMapping.findObligationType(CheckType.STK_CHECK).orElseThrow());
         assertEquals(ObligationType.EK, CheckTypeMapping.findObligationType(CheckType.EK_CHECK).orElseThrow());
-        assertEquals(ObligationType.VIGNETTE_SK, CheckTypeMapping.findObligationType(CheckType.VIGNETTE_SK_CHECK).orElseThrow());
-        assertEquals(ObligationType.VIGNETTE_CZ, CheckTypeMapping.findObligationType(CheckType.VIGNETTE_CZ_CHECK).orElseThrow());
-        assertEquals(ObligationType.VIGNETTE_AT, CheckTypeMapping.findObligationType(CheckType.VIGNETTE_AT_CHECK).orElseThrow());
+        assertEquals(ObligationType.VIGNETTE_SK,
+                CheckTypeMapping.findObligationType(CheckType.VIGNETTE_SK_CHECK).orElseThrow());
+        assertEquals(ObligationType.VIGNETTE_CZ,
+                CheckTypeMapping.findObligationType(CheckType.VIGNETTE_CZ_CHECK).orElseThrow());
+        assertEquals(ObligationType.VIGNETTE_AT,
+                CheckTypeMapping.findObligationType(CheckType.VIGNETTE_AT_CHECK).orElseThrow());
+        assertEquals(ObligationType.VIGNETTE_HU,
+                CheckTypeMapping.findObligationType(CheckType.VIGNETTE_HU_CHECK).orElseThrow());
     }
 
     @Test
@@ -32,6 +38,7 @@ class CheckTypeMappingTest {
         assertEquals(CountryCode.SK, CheckTypeMapping.findVignetteCountry(CheckType.VIGNETTE_SK_CHECK).orElseThrow());
         assertEquals(CountryCode.CZ, CheckTypeMapping.findVignetteCountry(CheckType.VIGNETTE_CZ_CHECK).orElseThrow());
         assertEquals(CountryCode.AT, CheckTypeMapping.findVignetteCountry(CheckType.VIGNETTE_AT_CHECK).orElseThrow());
+        assertEquals(CountryCode.HU, CheckTypeMapping.findVignetteCountry(CheckType.VIGNETTE_HU_CHECK).orElseThrow());
     }
 
     @Test
@@ -44,14 +51,14 @@ class CheckTypeMappingTest {
         assertEquals(CheckType.VIGNETTE_SK_CHECK, CheckTypeMapping.findVignetteCheckType(CountryCode.SK).orElseThrow());
         assertEquals(CheckType.VIGNETTE_CZ_CHECK, CheckTypeMapping.findVignetteCheckType(CountryCode.CZ).orElseThrow());
         assertEquals(CheckType.VIGNETTE_AT_CHECK, CheckTypeMapping.findVignetteCheckType(CountryCode.AT).orElseThrow());
+        assertEquals(CheckType.VIGNETTE_HU_CHECK, CheckTypeMapping.findVignetteCheckType(CountryCode.HU).orElseThrow());
     }
 
     @Test
     void exposesAllSupportedVignetteCountries() {
         assertEquals(
-            EnumSet.of(CountryCode.SK, CountryCode.CZ, CountryCode.AT),
-            CheckTypeMapping.supportedVignetteCountries()
-        );
+                EnumSet.of(CountryCode.SK, CountryCode.CZ, CountryCode.AT, CountryCode.HU),
+                CheckTypeMapping.supportedVignetteCountries());
     }
 
     @Test
@@ -64,6 +71,13 @@ class CheckTypeMappingTest {
 
     @Test
     void returnsEmptyForUnsupportedVignetteCountry() {
-        assertTrue(CheckTypeMapping.findVignetteCheckType(CountryCode.HU).isEmpty());
+        EnumSet<CountryCode> unsupported = EnumSet.allOf(CountryCode.class);
+        unsupported.removeAll(CheckTypeMapping.supportedVignetteCountries());
+        if (unsupported.isEmpty()) {
+            return;
+        }
+        for (CountryCode countryCode : unsupported) {
+            assertTrue(CheckTypeMapping.findVignetteCheckType(countryCode).isEmpty());
+        }
     }
 }

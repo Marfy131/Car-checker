@@ -46,7 +46,7 @@ CREATE TABLE insurance_policy (
 
 CREATE TABLE car_vignette_selection (
     car_id      INTEGER NOT NULL,
-    country     TEXT    NOT NULL CHECK (country IN ('SK', 'CZ', 'AT')),
+    country     TEXT    NOT NULL CHECK (country IN ('SK', 'CZ', 'AT', 'HU')),
     enabled     INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
     created_at  TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -64,9 +64,10 @@ CREATE TABLE obligation_state (
                                        'COLLISION',
                                        'STK',
                                        'EK',
-                                       'VIGNETTE_SK',
-                                       'VIGNETTE_CZ',
-                                       'VIGNETTE_AT'
+                                   'VIGNETTE_SK',
+                                   'VIGNETTE_CZ',
+                                   'VIGNETTE_AT',
+                                   'VIGNETTE_HU'
                                    )),
     expiry_date              TEXT,
     status                   TEXT    NOT NULL DEFAULT 'UNKNOWN'
@@ -96,6 +97,7 @@ CREATE TABLE check_schedule (
                                     'VIGNETTE_SK_CHECK',
                                     'VIGNETTE_CZ_CHECK',
                                     'VIGNETTE_AT_CHECK',
+                                    'VIGNETTE_HU_CHECK',
                                     'DAILY_SUMMARY_EMAIL',
                                     'DAILY_REMINDER_SCAN'
                                 )),
@@ -152,7 +154,8 @@ CREATE TABLE notification_log (
                                 'EK',
                                 'VIGNETTE_SK',
                                 'VIGNETTE_CZ',
-                                'VIGNETTE_AT'
+                                'VIGNETTE_AT',
+                                'VIGNETTE_HU'
                             )),
     notification_type    TEXT    NOT NULL
                                 CHECK (notification_type IN (

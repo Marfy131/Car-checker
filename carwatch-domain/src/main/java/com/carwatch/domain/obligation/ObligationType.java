@@ -7,5 +7,6 @@ public enum ObligationType {
     EK,
     VIGNETTE_SK,
     VIGNETTE_CZ,
-    VIGNETTE_AT
+    VIGNETTE_AT,
+    VIGNETTE_HU
 }

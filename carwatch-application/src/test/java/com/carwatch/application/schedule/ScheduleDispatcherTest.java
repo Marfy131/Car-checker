@@ -56,6 +56,7 @@ class ScheduleDispatcherTest {
     private final ExecutorService scheduleExecutionExecutor = new AbstractExecutorService() {
         @Override
         public void shutdown() {
+            // No-op: this test executor runs tasks immediately on the current thread and owns no resources.
         }
 
         @Override

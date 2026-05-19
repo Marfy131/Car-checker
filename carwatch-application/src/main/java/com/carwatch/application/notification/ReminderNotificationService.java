@@ -115,7 +115,7 @@ public class ReminderNotificationService {
         LocalDate today = LocalDate.now(clock);
         Map<Long, Car> carsById = loadCarsById();
         Set<ReminderDedupeKey> sentToday = loadReminderDedupeKeys(today);
-        List<ObligationState> states = obligationStateRepository.findAll();
+        List<ObligationState> states = new ArrayList<>(obligationStateRepository.findAll());
         states.sort(Comparator.comparing(ObligationState::getCarId, Comparator.nullsLast(Long::compareTo)));
         for (ObligationState state : states) {
             if (isReminderCandidate(state)) {
@@ -223,6 +223,7 @@ public class ReminderNotificationService {
             addEnabledVignetteItem(items, vignetteCountries, "SK", ObligationType.VIGNETTE_SK, carStates, locale);
             addEnabledVignetteItem(items, vignetteCountries, "CZ", ObligationType.VIGNETTE_CZ, carStates, locale);
             addEnabledVignetteItem(items, vignetteCountries, "AT", ObligationType.VIGNETTE_AT, carStates, locale);
+            addEnabledVignetteItem(items, vignetteCountries, "HU", ObligationType.VIGNETTE_HU, carStates, locale);
 
             carSummariesOut.add(new DailySummaryModel.CarSummary(
                     car.getName(),
@@ -409,6 +410,8 @@ public class ReminderNotificationService {
             case VIGNETTE_SK -> sk ? "Diaľničná známka SK" : "Vignette SK";
             case VIGNETTE_CZ -> sk ? "Diaľničná známka CZ" : "Vignette CZ";
             case VIGNETTE_AT -> sk ? "Diaľničná známka AT" : "Vignette AT";
+            case VIGNETTE_HU -> sk ? "Diaľničná známka HU" : "Vignette HU";
+            default -> "Unknown";
         };
     }
 
@@ -425,6 +428,8 @@ public class ReminderNotificationService {
             case VIGNETTE_SK -> sk ? "Dialnicna znamka SK" : "Vignette SK";
             case VIGNETTE_CZ -> sk ? "Dialnicna znamka CZ" : "Vignette CZ";
             case VIGNETTE_AT -> sk ? "Dialnicna znamka AT" : "Vignette AT";
+            case VIGNETTE_HU -> sk ? "Dialnicna znamka HU" : "Vignette HU";
+            default -> "Unknown";
         };
     }
 

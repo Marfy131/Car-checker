@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content})}">
+<html xmlns:th="http://www.thymeleaf.org" lang="sk" xml:lang="sk" th:replace="~{layout :: layout(~{::content})}">
+<head>
+    <title th:text="${formMode == 'edit'} ? #{car.form.title.edit} : #{car.form.title.add}">Car Form</title>
+</head>
 <body>
 <div th:fragment="content">
     <h1 class="h3 mb-3"
@@ -41,8 +44,8 @@
             <div class="text-danger small" th:errors="*{vin}">VIN error</div>
         </div>
 
-        <div class="col-12">
-            <label class="form-label d-block" th:text="#{car.form.vignettes}">Vignettes</label>
+        <fieldset class="col-12 border-0">
+            <legend class="col-form-label d-block" th:text="#{car.form.vignettes}">Vignettes</legend>
             <div class="form-check form-check-inline">
                 <input id="vignetteSk" class="form-check-input" type="checkbox" th:field="*{vignetteSk}"/>
                 <label class="form-check-label" for="vignetteSk" th:text="#{car.form.vignette.sk}">
@@ -61,7 +64,13 @@
                     Austria (AT)
                 </label>
             </div>
-        </div>
+            <div class="form-check form-check-inline">
+                <input id="vignetteHu" class="form-check-input" type="checkbox" th:field="*{vignetteHu}"/>
+                <label class="form-check-label" for="vignetteHu" th:text="#{car.form.vignette.hu}">
+                    Hungary (HU)
+                </label>
+            </div>
+        </fieldset>
 
         <div class="col-12 d-flex gap-2">
             <button type="submit" class="btn btn-primary" th:text="#{car.form.save}">Save</button>

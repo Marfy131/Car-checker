@@ -32,8 +32,11 @@ import org.testcontainers.utility.DockerImageName;
 class ScheduledWorkflowProviderIT {
 
     @Container
-    static final GenericContainer<?> mailpit = new GenericContainer<>(DockerImageName.parse("axllent/mailpit:latest"))
-            .withExposedPorts(1025, 8025);
+    static final GenericContainer<?> mailpit = new GenericContainer<>(DockerImageName.parse("axllent/mailpit:latest"));
+
+    static {
+        mailpit.withExposedPorts(1025, 8025);
+    }
 
     @DynamicPropertySource
     static void configureMailProperties(DynamicPropertyRegistry registry) {
