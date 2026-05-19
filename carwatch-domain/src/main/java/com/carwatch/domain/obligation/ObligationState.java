@@ -2,7 +2,9 @@ package com.carwatch.domain.obligation;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -38,9 +40,11 @@ public class ObligationState {
     @Column("manual_override")
     private boolean manualOverride;
 
+    @CreatedDate
     @Column("created_at")
     private LocalDateTime createdAt;
 
+    @LastModifiedDate
     @Column("updated_at")
     private LocalDateTime updatedAt;
 

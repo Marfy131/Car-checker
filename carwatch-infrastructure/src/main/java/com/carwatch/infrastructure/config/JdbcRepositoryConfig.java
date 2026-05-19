@@ -6,9 +6,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
+import org.springframework.data.jdbc.repository.config.EnableJdbcAuditing;
 
 @Configuration
 @EnableJdbcRepositories(basePackages = "com.carwatch.infrastructure.persistence")
+@EnableJdbcAuditing
 public class JdbcRepositoryConfig {
 
     @Bean
