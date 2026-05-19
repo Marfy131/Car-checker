@@ -3,8 +3,9 @@ spring:
     url: ${CARWATCH_DB_URL:jdbc:sqlite:${CARWATCH_HOME:/opt/carwatch}/data/carwatch.db}
     driver-class-name: org.sqlite.JDBC
     hikari:
-      maximum-pool-size: ${CARWATCH_DB_MAX_POOL:2}
+      maximum-pool-size: ${CARWATCH_DB_MAX_POOL:1}
       minimum-idle: ${CARWATCH_DB_MIN_IDLE:0}
+      connection-init-sql: "PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL;"
   flyway:
     enabled: false
   mail:
