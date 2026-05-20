@@ -192,6 +192,41 @@ Provider integrations should be isolated behind interfaces.
 - prefer direct HTTP/form integrations over browser automation
 - treat collision insurance as **manual mode first**, unless a stable insurer-specific integration is available later
 
+## Public Data Sources — Current Availability
+
+As of 2025, **no free, officially documented public REST/JSON API exists** for any of the vehicle obligation types this application tracks. All checks currently run in `MANUAL` mode — expiry dates are entered by the user through the web UI and stored in the database. The scheduler then evaluates those stored dates and sends email reminders.
+
+The table below summarises what was found after researching each obligation type.
+
+| Obligation | Country | Free public API? | Best available option |
+|---|---|---|---|
+| PZP (mandatory insurance) | SK | No | Web form only at [skp.sk](https://www.skp.sk/vyhladat-poistovatela-vozidla-a-overit-platnost-pzp/) — old undocumented webservice (`ws.skp.sk`) is dead; direct agreement with SKP required for programmatic access |
+| Collision insurance | SK/CZ | No | No public registry for collision policies in any country |
+| STK (technical inspection) | SK | No | [data.slovensko.sk](https://data.slovensko.sk/datasety/api-pre-pristup-k-stk-vozidiel) lists an API in the national open data catalogue, but actual access requires a NASES integration agreement — intended for public-sector bodies, not self-service |
+| STK | CZ | Partial | Czech Ministry of Transport publishes bulk CSV open data at [dataovozidlech.cz](https://dataovozidlech.cz/otevrenaData/vypisy); lookup is **VIN-only** (license plate blocked by GDPR); a semi-public API is consumed by third-party services (stkguru.cz) but the endpoint is not officially documented |
+| EK (emission control) | SK | No | Web form at [seka.sk](https://www.seka.sk/verejnost/sluzby/overenie-emisnej-kontroly) only |
+| Vignette | SK | No | Web form at [eznamka.sk](https://eznamka.sk) only; NDS has not published an API |
+| Vignette | CZ | No | Web form at [edalnice.cz](https://edalnice.cz) only |
+| Vignette | AT | No | Public web query at [evidenz.asfinag.at](https://evidenz.asfinag.at/en/) — publicly accessible but no documented developer API |
+| Vignette | HU | No | Web form at [toll-charge.hu](https://toll-charge.hu/en/query-valid-e-vignettes) only |
+
+### Commercial aggregators
+
+The following paid services have real APIs and cover multiple countries including SK/CZ/AT/HU. They aggregate vehicle history, inspection records, and in some cases insurance data.
+
+| Service | Coverage | Notes |
+|---|---|---|
+| [autoDNA](https://www.autodna.com/company/partners-area) | 26+ EU countries | Per-lookup pricing; partners portal |
+| [Cebia](https://www.cebia.cz) | CZ + SK primary, 20 countries | Strong CZ/SK data; B2B API |
+| [GlobalVIN](https://globalvin.co/european-api) | 27+ EU countries | MOT/inspection data; contact for pricing |
+
+### Future integration path
+
+If any of the above sources opens a public API, the application is already structured to accept new providers:
+- `PolicyCheckProvider` interface — for PZP / collision insurance online checks
+- `VehicleCheckProvider` interface — for STK, EK, vignette online checks
+- `CheckMode.ONLINE` path in `ManualFirstPolicyVehicleCheckProvider` — falls back gracefully to stored date if provider is absent or fails
+
 ## Internationalization
 
 ### Language policy

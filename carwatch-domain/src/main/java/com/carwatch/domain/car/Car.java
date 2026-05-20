@@ -2,7 +2,9 @@ package com.carwatch.domain.car;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -26,11 +28,13 @@ public class Car {
     private boolean active;
 
     @Version
-    private int version;
+    private Integer version;
 
+    @CreatedDate
     @Column("created_at")
     private LocalDateTime createdAt;
 
+    @LastModifiedDate
     @Column("updated_at")
     private LocalDateTime updatedAt;
 
@@ -82,11 +86,11 @@ public class Car {
         this.active = active;
     }
 
-    public int getVersion() {
+    public Integer getVersion() {
         return version;
     }
 
-    public void setVersion(int version) {
+    public void setVersion(Integer version) {
         this.version = version;
     }
 

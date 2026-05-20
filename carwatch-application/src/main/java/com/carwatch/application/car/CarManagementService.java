@@ -17,6 +17,8 @@ import com.carwatch.domain.schedule.CheckTypeMapping;
 import com.carwatch.domain.vignette.CarVignetteSelection;
 import com.carwatch.domain.vignette.CarVignetteSelectionRepository;
 import com.carwatch.domain.vignette.CountryCode;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -49,19 +51,22 @@ public class CarManagementService {
     private final CarVignetteSelectionRepository carVignetteSelectionRepository;
     private final CheckScheduleRepository checkScheduleRepository;
     private final ObligationStateRepository obligationStateRepository;
+    private final Clock clock;
 
     public CarManagementService(
             CarRepository carRepository,
             InsurancePolicyRepository insurancePolicyRepository,
             CarVignetteSelectionRepository carVignetteSelectionRepository,
             CheckScheduleRepository checkScheduleRepository,
-            ObligationStateRepository obligationStateRepository
+            ObligationStateRepository obligationStateRepository,
+            Clock clock
     ) {
         this.carRepository = carRepository;
         this.insurancePolicyRepository = insurancePolicyRepository;
         this.carVignetteSelectionRepository = carVignetteSelectionRepository;
         this.checkScheduleRepository = checkScheduleRepository;
         this.obligationStateRepository = obligationStateRepository;
+        this.clock = clock;
     }
 
     @Transactional
@@ -90,11 +95,14 @@ public class CarManagementService {
         insurancePolicyRepository.save(createDefaultInsurancePolicy(carId, PolicyType.PZP));
         insurancePolicyRepository.save(createDefaultInsurancePolicy(carId, PolicyType.COLLISION));
 
+        LocalDateTime now = LocalDateTime.now(clock);
         for (CountryCode country : vignetteCountries) {
             CarVignetteSelection selection = new CarVignetteSelection();
             selection.setCarId(carId);
             selection.setCountry(country);
             selection.setEnabled(true);
+            selection.setCreatedAt(now);
+            selection.setUpdatedAt(now);
             carVignetteSelectionRepository.save(selection);
         }
 

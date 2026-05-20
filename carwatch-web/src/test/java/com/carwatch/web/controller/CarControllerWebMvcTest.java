@@ -47,6 +47,7 @@ class CarControllerWebMvcTest {
         Car car = new Car();
         car.setId(11L);
         car.setName("Octavia");
+        car.setActive(true);
         car.setVersion(5);
         when(carManagementService.findAll()).thenReturn(List.of(car));
 
