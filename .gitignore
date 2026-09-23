@@ -87,3 +87,4 @@ TEST*.xml
 ## local .m2 repository in project
 .m2
 .m2/repository/
+.*/
